@@ -28,3 +28,10 @@ flask --app index run
 pip freeze >> requirements.txt
 ```
 - It will make sure the required packages are up to date
+
+## IF YOU'RE GETTING SET UP
+```
+- Create a ".env" file in the same directory as index.py. Then set the variable "SQLALCHEMY_DATABASE_URI"
+to the connection string for the db (make sure it starts with mysql+pymysql). If you need the connection 
+string, ask either Abdul or Chirayu.
+```
