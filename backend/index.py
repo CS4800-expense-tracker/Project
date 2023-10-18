@@ -56,7 +56,7 @@ def test():
         }
         output.append(temp)
 
-    return jsonify({"Results" : testing})
+    return jsonify({"Results" : output})
 
 
 

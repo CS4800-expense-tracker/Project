@@ -7,14 +7,20 @@ mkdir venv
 2. The next thing you want to do is actually initialize this virtual enviornment within the venv folder. Do so using this command.
 ```
 python3 -m venv venv
+if you are using Windows:
+python -m venv vene
 ```
 3. Perfect! Now that we have our enviornment created, we want to activate it.
 ```
 . venv/bin/activate
+if you are using Windows (and VS Code Terminal), first:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+and then:
+.\venv\Scripts\activate.ps1
 ```
 4. After it's activated, you just want to install all necessary dependencies/libraries
 ```
-pip install -r requirments.txt
+pip install -r requirements.txt
 ```
 
 ## HOW TO RUN THE FLASK APP
