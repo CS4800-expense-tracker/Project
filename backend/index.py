@@ -51,7 +51,7 @@ class Test(db.Model):
 
 
 @app.route("/")
-def test():
+def home():
     """
     The way sql alchemy works is:
     You create a table, and that table will define the schema that you're ulimatly looking for in a db. 
@@ -86,6 +86,13 @@ def test():
 @app.route("/login")
 def login():
     return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True)
+    )
+
+@app.route("/signup")
+def signup():
+    return oauth.auth0.authorize_redirect(
+        screen_hint="signup",
         redirect_uri=url_for("callback", _external=True)
     )
 
