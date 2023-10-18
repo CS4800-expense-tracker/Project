@@ -50,34 +50,34 @@ class Test(db.Model):
 
 
 
-# @app.route("/")
-# def test():
-#     """
-#     The way sql alchemy works is:
-#     You create a table, and that table will define the schema that you're ulimatly looking for in a db. 
-#     You can also use this schema to CREATE a table in a db, but we prob won't do that (?) 
+@app.route("/")
+def test():
+    """
+    The way sql alchemy works is:
+    You create a table, and that table will define the schema that you're ulimatly looking for in a db. 
+    You can also use this schema to CREATE a table in a db, but we prob won't do that (?) 
     
-#     Anways, you can query a specific table using .all(), or .filter()
-#     That will return I a list of all the rows
-#     You need to iterate through all these rows, and map out the items that come through it as you see fit
+    Anways, you can query a specific table using .all(), or .filter()
+    That will return I a list of all the rows
+    You need to iterate through all these rows, and map out the items that come through it as you see fit
 
-#     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
-#     Cause for a big table this will take up a LOT of memory  
-#     """    
+    Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
+    Cause for a big table this will take up a LOT of memory  
+    """    
 
-#     testing = Test.query.all()
-#     output = []
-#     for test in testing:
-#         temp = {
-#             "id" : test.id,
-#             "created_at" : test.created_at,
-#             "custom" : test.custom,
-#             "testStrign": "This is a stirng",
-#             "testInt" : 1
-#         }
-#         output.append(temp)
+    testing = Test.query.all()
+    output = []
+    for test in testing:
+        temp = {
+            "id" : test.id,
+            "created_at" : test.created_at,
+            "custom" : test.custom,
+            "testStrign": "This is a stirng",
+            "testInt" : 1
+        }
+        output.append(temp)
 
-#     return jsonify({"Results" : output})
+    return jsonify({"Results" : output})
 
 ## TODO: Make a signup route
 ## after a user logs in, we get back a token that contains user information. We can use that
@@ -109,10 +109,6 @@ def logout():
             quote_via=quote_plus,
         )
     )
-
-@app.route("/")
-def home():
-    return render_template("home.html", session=session.get('user'), pretty=json.dumps(session.get('user'), indent=4))
 
 
 if __name__ == "__main__":
