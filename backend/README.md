@@ -41,3 +41,11 @@ pip freeze >> requirements.txt
 to the connection string for the db (make sure it starts with mysql+pymysql). If you need the connection 
 string, ask either Abdul or Chirayu.
 ```
+
+## TO CREATE AN ENV FILE
+```
+Add these to your .env file: 
+__pycache__
+venv
+.env
+```
