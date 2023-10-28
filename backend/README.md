@@ -8,7 +8,7 @@ mkdir venv
 ```
 python3 -m venv venv
 if you are using Windows:
-python -m venv vene
+python -m venv venv
 ```
 3. Perfect! Now that we have our enviornment created, we want to activate it.
 ```
