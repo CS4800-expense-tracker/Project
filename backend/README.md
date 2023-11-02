@@ -8,14 +8,14 @@ mkdir venv
 ```
 python3 -m venv venv
 if you are using Windows:
-python -m venv vene
+python -m venv venv
 ```
 3. Perfect! Now that we have our enviornment created, we want to activate it.
 ```
 . venv/bin/activate
-if you are using Windows (and VS Code Terminal), first:
+if you are using Windows (and VS Code Terminal), only for the first time running:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-and then:
+and then everytime:
 .\venv\Scripts\activate.ps1
 ```
 4. After it's activated, you just want to install all necessary dependencies/libraries
