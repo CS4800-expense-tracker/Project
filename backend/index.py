@@ -46,7 +46,7 @@ class User(db.Model):
 
 class Category(db.Model):
     category_id = db.Column(db.Integer, primary_key=True)
-    category_name = db.Column(db.String(50), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
     percent = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
@@ -59,16 +59,16 @@ class Expense(db.Model):
     year = db.Column(db.String(4), nullable=False)
     total_spent = db.Column(db.Float, nullable=False)
     store_name = db.Column(db.String(255), nullable=False)
-    category_name = db.Column(db.String(50), db.ForeignKey(Category.category_name), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey(Category.category_id), nullable=False)
     current_budget = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f'<test expense_id={self.expense_id} />'
+        return f'<test expense_id={self.expense_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_spent={self.total_spent}, store_name={self.store_name}, category_id={self.category_id}, current_budget={self.current_budget} />'
 
 
 # creates all tables defined above. only run this if you're creating a new table.
-# with app.app_context():
-#     db.create_all()
+with app.app_context():
+    db.create_all()
 
 
 
