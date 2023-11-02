@@ -30,25 +30,49 @@ oauth.register(
     server_metadata_url=f'https://{env.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
 )
 
-print("#############")
-print(env.get('SQLALCHEMY_DATABASE_URI'))
-print("#############")
-# Mysql connection string in format mysql://user:password@domain:port/database
-
-
-### CREATING TABLES ####
+""" CREATING TABLES """
 
 # All table names are lower case according to the program. So this "Test" table would be seen as test
-class Test(db.Model):
-    id = db.Column(db.Integer, primary_key=True)    
-    created_at = db.Column(db.DateTime)    
-    custom = db.Column(db.String(255))    
+class User(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True)    
+    email = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    total_budget = db.Column(db.Integer, nullable=False)
+    
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.id}, created_at={self.created_at}, custom={self.custom} />'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}, total_budget={self.total_budget} />'
+
+class Category(db.Model):
+    category_id = db.Column(db.Integer, primary_key=True)
+    category_name = db.Column(db.String(50), nullable=False)
+    percent = db.Column(db.Float, nullable=False)
+
+    def __repr__(self):
+        return f'<test categoryID={self.category_id}, name={self.name}, percent={self.percent} />'
+
+class Expense(db.Model):
+    expense_id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    month = db.Column(db.String(10), nullable=False)
+    year = db.Column(db.String(4), nullable=False)
+    total_spent = db.Column(db.Float, nullable=False)
+    store_name = db.Column(db.String(255), nullable=False)
+    category_name = db.Column(db.String(50), db.ForeignKey(Category.category_name), nullable=False)
+    current_budget = db.Column(db.Float, nullable=False)
+
+    def __repr__(self):
+        return f'<test expense_id={self.expense_id} />'
 
 
+# creates all tables defined above. only run this if you're creating a new table.
+# with app.app_context():
+#     db.create_all()
+
+
+
+"""             STARTING ROUTES SECTION          """
 
 @app.route("/")
 def home():
@@ -65,7 +89,7 @@ def home():
     Cause for a big table this will take up a LOT of memory  
     """    
 
-    testing = Test.query.all()
+    testing = Test1.query.all()
     output = []
     for test in testing:
         temp = {
