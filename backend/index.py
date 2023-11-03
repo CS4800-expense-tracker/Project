@@ -74,75 +74,75 @@ with app.app_context():
 
 
 
-# """             STARTING ROUTES SECTION          """
+"""             STARTING ROUTES SECTION          """
 
-# @app.route("/")
-# def home():
-#     """
-#     The way sql alchemy works is:
-#     You create a table, and that table will define the schema that you're ulimatly looking for in a db. 
-#     You can also use this schema to CREATE a table in a db, but we prob won't do that (?) 
+@app.route("/")
+def home():
+    """
+    The way sql alchemy works is:
+    You create a table, and that table will define the schema that you're ulimatly looking for in a db. 
+    You can also use this schema to CREATE a table in a db, but we prob won't do that (?) 
     
-#     Anways, you can query a specific table using .all(), or .filter()
-#     That will return I a list of all the rows
-#     You need to iterate through all these rows, and map out the items that come through it as you see fit
+    Anways, you can query a specific table using .all(), or .filter()
+    That will return I a list of all the rows
+    You need to iterate through all these rows, and map out the items that come through it as you see fit
 
-#     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
-#     Cause for a big table this will take up a LOT of memory  
-#     """    
+    Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
+    Cause for a big table this will take up a LOT of memory  
+    """    
 
-#     testing = Expense.query.all()
-#     output = []
-#     for test in testing:
-#         temp = {
-#             "id" : test.id,
-#             "created_at" : test.created_at,
-#             "custom" : test.custom,
-#             "testStrign": "This is a stirng",
-#             "testInt" : 1
-#         }
-#         output.append(temp)
+    testing = Expense.query.all()
+    output = []
+    for test in testing:
+        temp = {
+            "id" : test.id,
+            "created_at" : test.created_at,
+            "custom" : test.custom,
+            "testStrign": "This is a stirng",
+            "testInt" : 1
+        }
+        output.append(temp)
 
-#     return jsonify({"Results" : output})
+    return jsonify({"Results" : output})
 
-# ## TODO: Make a signup route
-# ## after a user logs in, we get back a token that contains user information. We can use that
-# ## to pull up their shit in the db
+## TODO: Make a signup route
+## after a user logs in, we get back a token that contains user information. We can use that
+## to pull up their shit in the db
 
-# @app.route("/login")
-# def login():
-#     return oauth.auth0.authorize_redirect(
-#         redirect_uri=url_for("callback", _external=True)
-#     )
+@app.route("/login")
+def login():
+    return oauth.auth0.authorize_redirect(
+        redirect_uri=url_for("callback", _external=True)
+    )
 
-# @app.route("/signup")
-# def signup():
-#     return oauth.auth0.authorize_redirect(
-#         screen_hint="signup",
-#         redirect_uri=url_for("callback", _external=True)
-#     )
+@app.route("/signup")
+def signup():
+    return oauth.auth0.authorize_redirect(
+        screen_hint="signup",
+        redirect_uri=url_for("callback", _external=True)
+    )
 
-# @app.route("/callback", methods=["GET", "POST"])
-# def callback():
-#     token = oauth.auth0.authorize_access_token()
-#     session["user"] = token
-#     return redirect("/")
+@app.route("/callback", methods=["GET", "POST"])
+def callback():
+    token = oauth.auth0.authorize_access_token()
+    session["user"] = token
+    return redirect("/")
 
-# @app.route("/logout")
-# def logout():
-#     session.clear()
-#     return redirect(
-#         "https://" + env.get("AUTH0_DOMAIN")
-#         + "/v2/logout?"
-#         + urlencode(
-#             {
-#                 "returnTo": url_for("home", _external=True),
-#                 "client_id": env.get("AUTH0_CLIENT_ID"),
-#             },
-#             quote_via=quote_plus,
-#         )
-#     )
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(
+        "https://" + env.get("AUTH0_DOMAIN")
+        + "/v2/logout?"
+        + urlencode(
+            {
+                "returnTo": url_for("home", _external=True),
+                "client_id": env.get("AUTH0_CLIENT_ID"),
+            },
+            quote_via=quote_plus,
+        )
+    )
 
 
-# if __name__ == "__main__":
-#     app.run(host="localhost", port=3000)
+if __name__ == "__main__":
+    app.run(host="localhost", port=3000)
