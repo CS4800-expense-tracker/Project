@@ -41,7 +41,7 @@ class User(db.Model):
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.user_id}, email={self.email}, name={self.name}, total_budget={self.total_budget} />'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}/>'
 
 class TotalBudget(db.Model):
     budget_id = db.Column(db.Integer, primary_key=True)
@@ -50,6 +50,9 @@ class TotalBudget(db.Model):
     month = db.Column(db.String(10), nullable=False)
     year = db.Column(db.String(4), nullable=False)
     total_budget = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<test budget_id={self.budget_id}, user_id={self.user_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_budget={self.total_budget}/>'
 
 class Category(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
@@ -61,7 +64,7 @@ class Category(db.Model):
     year = db.Column(db.String(4), nullable=False)
 
     def __repr__(self):
-        return f'<test categoryID={self.category_id}, name={self.name}, percent={self.percent} />'
+        return f'<test categoryID={self.category_id}, name={self.name}, percent={self.percent}, timestamp={self.timestamp}, month={self.month}, year={self.year} />'
 
 class Expense(db.Model):
     expense_id = db.Column(db.Integer, primary_key=True)
@@ -74,7 +77,7 @@ class Expense(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey(Category.category_id), nullable=False)
 
     def __repr__(self):
-        return f'<test expense_id={self.expense_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_spent={self.total_spent}, store_name={self.store_name}, category_id={self.category_id}, current_budget={self.current_budget} />'
+        return f'<test expense_id={self.expense_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_spent={self.total_spent}, store_name={self.store_name}, user_id={self.user_id} category_id={self.category_id}/>'
 
 
 # creates all tables defined above. only run this if you're creating a new table.
