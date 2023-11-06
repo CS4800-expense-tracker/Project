@@ -3,7 +3,7 @@ from os import getenv, environ as env
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
 from dotenv import load_dotenv, find_dotenv
-from flask import Flask, render_template, request, url_for, redirect, jsonify, session
+from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy.sql import func
@@ -37,21 +37,34 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)    
     email = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    total_budget = db.Column(db.Integer, nullable=False)
-    
+    #current_budget = db.Column(db.Float, nullable=False)
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.user_id}, email={self.email}, name={self.name}, total_budget={self.total_budget} />'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}/>'
+
+class TotalBudget(db.Model):
+    budget_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    month = db.Column(db.String(10), nullable=False)
+    year = db.Column(db.String(4), nullable=False)
+    total_budget = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return f'<test budget_id={self.budget_id}, user_id={self.user_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_budget={self.total_budget}/>'
 
 class Category(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
     category_id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
     percent = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    month = db.Column(db.String(10), nullable=False)
+    year = db.Column(db.String(4), nullable=False)
 
     def __repr__(self):
-        return f'<test categoryID={self.category_id}, name={self.name}, percent={self.percent} />'
+        return f'<test categoryID={self.category_id}, name={self.name}, percent={self.percent}, timestamp={self.timestamp}, month={self.month}, year={self.year} />'
 
 class Expense(db.Model):
     expense_id = db.Column(db.Integer, primary_key=True)
@@ -62,10 +75,9 @@ class Expense(db.Model):
     store_name = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.user_id), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey(Category.category_id), nullable=False)
-    current_budget = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
-        return f'<test expense_id={self.expense_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_spent={self.total_spent}, store_name={self.store_name}, category_id={self.category_id}, current_budget={self.current_budget} />'
+        return f'<test expense_id={self.expense_id}, timestamp={self.timestamp}, month={self.month}, year={self.year}, total_spent={self.total_spent}, store_name={self.store_name}, user_id={self.user_id} category_id={self.category_id}/>'
 
 
 # creates all tables defined above. only run this if you're creating a new table.
