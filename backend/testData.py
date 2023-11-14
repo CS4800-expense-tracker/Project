@@ -71,9 +71,9 @@ with app.app_context():
     db.session.add(new_expense13)
     db.session.commit()
     new_subexpense13 = SubExpense(
-        expense_id=new_expense12.expense_id,
-        category_id=new_category2.category_id,
-        spent=17.0
+        expense_id=new_expense13.expense_id,
+        category_id=new_category3.category_id,
+        spent=25.0
     )
     db.session.add(new_subexpense13)
     db.session.commit()

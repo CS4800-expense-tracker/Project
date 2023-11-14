@@ -5,7 +5,7 @@ from urllib.parse import quote_plus, urlencode
 from dotenv import load_dotenv, find_dotenv
 from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import and_
+from sqlalchemy import and_, extract
 import datetime
 
 from sqlalchemy.sql import func
@@ -104,21 +104,7 @@ def home():
     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
     Cause for a big table this will take up a LOT of memory  
     """    
-
-    testing = Expense.query.all()
-    output = []
-    for test in testing:
-        temp = {
-            "id" : test.id,
-            "created_at" : test.created_at,
-            "custom" : test.custom,
-            "testStrign": "This is a stirng",
-            "testInt" : 1
-        }
-        output.append(temp)
-
-    return jsonify({"Results" : output})
-
+    return "Hello World"
 ## TODO: Make a signup route
 ## after a user logs in, we get back a token that contains user information. We can use that
 ## to pull up their shit in the db
@@ -157,14 +143,89 @@ def logout():
         )
     )
 
+# Read user info
+@app.route('/user/<user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get(user_id)
+    return jsonify({"name" : user.name, "email" : user.email})
+# return f'Name: {user.name}, Email: {user.email}'
 
-# CRUD Methods for User
-# Add new user
+# Read the latest total budget
+@app.route('/total_budget/<user_id>', methods=['GET'])
+def get_total_budget(user_id):    
+    total_budget = TotalBudget.query.filter(
+        TotalBudget.user_id == user_id
+    ).order_by(TotalBudget.timestamp.desc()).first()
+    
+    if total_budget:
+        return ({"totalBudget": total_budget.total_budget})
 
-# CRUD Methods for Expense
+# Read all categories based on the latest month
+@app.route('/categories/<user_id>', methods=['GET'])
+def get_categories(user_id):
+    current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+    categories = Category.query.filter(
+        and_(
+            Category.user_id == user_id,
+            extract('month', Category.timestamp) == current_month
+        )
+    ).order_by(Category.timestamp.desc()).all()
+    
+    category_info = []
+    for category in categories:
+        category_info.append({
+            "name": category.name,
+            "percent": category.percent
+        })
+    
+    return jsonify(category_info)
 
+# Read all expenses based on the latest month
+@app.route('/expense/<user_id>', methods=['GET'])
+def get_expenses(user_id):
+    current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
+    expenses = Expense.query.filter(
+        and_(
+            Expense.user_id == user_id,
+            extract('month', Expense.timestamp) == current_month
+        )
+    ).order_by(Expense.timestamp.desc()).all()
 
-# CRUD Methods for Sub Expense
+    expense_info = []
+    for expense in expenses:
+        expense_info.append({
+            "expense_id": expense.expense_id,
+            "store_name": expense.store_name,
+            "total_spent": expense.total_spent,
+            "timestamp": expense.timestamp
+        })
+
+    return jsonify(expense_info)
+
+# Read all sub-expenses associated with Expense
+@app.route('/sub_expense/<expense_id>', methods=['GET'])
+def get_sub_expense(expense_id):
+    sub_expenses = SubExpense.query.filter(
+        and_(
+            SubExpense.expense_id == expense_id
+        )
+    ).all()
+
+    sub_expense_info = []
+    for sub_expense in sub_expenses:
+        # Find the category name based on user_id and current sub_expense category_id
+        category_id = sub_expense.category_id
+        category = Category.query.filter(
+            Category.category_id == category_id
+        ).order_by(Category.timestamp.desc()).first()
+
+        sub_expense_info.append({
+            "sub_expense_id": sub_expense.sub_expense_id,
+            "spent": sub_expense.spent,
+            "category_name": category.name if category else None
+        })
+    
+    return jsonify(sub_expense_info)
 
 if __name__ == "__main__":
     app.run(host="localhost", port=3000)
