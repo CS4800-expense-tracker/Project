@@ -10,6 +10,7 @@ export default function AnimatedButton(props) {
   const textContent = props.text;
   const buttonStyling = props.buttonStyle;
   const viewStyling = props.viewStyle;
+  const onPress = props.onPress;
 
   const bgColor = useSharedValue(bgColorProp);
   const textColor = useSharedValue(textColorProp);
@@ -28,6 +29,7 @@ export default function AnimatedButton(props) {
     <Pressable
       onHoverIn={buttonHoverIn}
       onHoverOut={buttonHoverOut}
+      onPress={onPress}
       style={buttonStyling}
     >
       <Animated.View style={[viewStyling, { backgroundColor: bgColor }]}>
