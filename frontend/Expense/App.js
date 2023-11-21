@@ -7,10 +7,10 @@ import {
   Rubik_600SemiBold,
   Rubik_700Bold,
 } from "@expo-google-fonts/rubik";
-import Landing from "./Landing";
-import Overview from "./overview";
-import Expenses from "./expenses";
-import Account from "./account";
+import Landing from "./Landing.js";
+import Overview from "./Overview.js";
+import Expenses from "./Expenses.js";
+import Account from "./Account.js";
 
 const linking = {
   config: {
