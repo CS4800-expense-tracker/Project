@@ -9,7 +9,6 @@ export default function Sidebar(props) {
   const overviewIcon = require("./img/grid.svg");
   const expensesIcon = require("./img/receipt.svg");
   const accountIcon = require("./img/person-circle.svg");
-  const logOutIcon = require("./img/log-out.svg");
 
   const overviewSectionBgColor = useSharedValue(
     page === "overview" ? "#384718" : "#131808"
