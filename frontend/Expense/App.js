@@ -11,6 +11,7 @@ import Landing from "./Landing.js";
 import Overview from "./Overview.js";
 import Expenses from "./Expenses.js";
 import Account from "./Account.js";
+import BankLink from "./Bank-Link.js";
 
 const linking = {
   config: {
@@ -19,6 +20,7 @@ const linking = {
       Overview: "account/overview",
       Expenses: "account/expenses",
       Account: "account/settings",
+      BankLink: "account/bank-link",
     },
   },
 };
@@ -42,6 +44,7 @@ export default function App() {
         <Stack.Screen name="Overview" component={Overview} />
         <Stack.Screen name="Expenses" component={Expenses} />
         <Stack.Screen name="Account" component={Account} />
+        <Stack.Screen name="BankLink" component={BankLink} />
       </Stack.Navigator>
     </NavigationContainer>
   );
