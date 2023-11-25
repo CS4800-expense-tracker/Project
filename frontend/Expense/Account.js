@@ -72,13 +72,17 @@ export default function Account() {
           You {linkedBank ? "already" : "do not currently"} have a bank account
           connected with PennyWise
         </BodyText>
-        <Link to={{ screen: "BankLink" }}>
+        <Link
+          to={{ screen: "BankLink" }}
+          style={{ width: linkedBank ? 216 : 200 }}
+        >
           <AnimatedButton
             bgColor={linkedBank ? "#ddd" : "#BCEE51"}
             hoverBgColor={linkedBank ? "#803333" : "#558033"}
             textColor={linkedBank ? "#803333" : "#384718"}
             hoverTextColor={"#fff"}
             text={linkedBank ? "Unlink your account" : "Link your account"}
+            buttonStyle={{ width: linkedBank ? 216 : 200 }}
             viewStyle={styles.bankLinkButtonView}
           />
         </Link>
