@@ -9,6 +9,7 @@ export default function Sidebar(props) {
   const overviewIcon = require("./img/grid.svg");
   const expensesIcon = require("./img/receipt.svg");
   const accountIcon = require("./img/person-circle.svg");
+  const logOutIcon = require("./img/log-out.svg");
 
   const overviewSectionBgColor = useSharedValue(
     page === "overview" ? "#384718" : "#131808"
@@ -19,6 +20,7 @@ export default function Sidebar(props) {
   const accountSectionBgColor = useSharedValue(
     page === "account" ? "#384718" : "#131808"
   );
+  const logOutColor = useSharedValue("#84A739");
 
   const overviewSectionHoverIn = () => {
     overviewSectionBgColor.value = withTiming(
@@ -52,6 +54,14 @@ export default function Sidebar(props) {
     accountSectionBgColor.value = withTiming(
       page === "account" ? "#384718" : "#131808"
     );
+  };
+
+  const logOutHoverIn = () => {
+    logOutColor.value = withTiming("#bcee51");
+  };
+
+  const logOutHoverOut = () => {
+    logOutColor.value = withTiming("#84A739");
   };
 
   return (
@@ -162,6 +172,25 @@ export default function Sidebar(props) {
           </Animated.View>
         </Pressable>
       </Link>
+      <Link to={{ screen: "Landing" }} style={styles.logOutLink}>
+        <Pressable
+          onHoverIn={logOutHoverIn}
+          onHoverOut={logOutHoverOut}
+          style={styles.logOutButton}
+        >
+          <View>
+            <Animated.Text
+              style={[
+                styles.text,
+                styles.logOutText,
+                { color: logOutColor, borderColor: logOutColor },
+              ]}
+            >
+              Log out
+            </Animated.Text>
+          </View>
+        </Pressable>
+      </Link>
     </View>
   );
 }
@@ -195,6 +224,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingLeft: 20,
   },
+  logOutButtonView: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+  },
   currentSectionButtonView: {
     display: "flex",
     flexDirection: "row",
@@ -221,5 +257,19 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     marginRight: 12,
+  },
+  logOutLink: {
+    display: "flex",
+    alignSelf: "center",
+  },
+  logOutText: {
+    borderBottomWidth: 1,
+    borderColor: "#84A739",
+    // textDecorationLine: "underline",
+    // textDecorationStyle: "solid",
+    // textDecorationColor: "#84A739",
+  },
+  logOutButton: {
+    marginTop: 12,
   },
 });
