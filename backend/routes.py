@@ -5,7 +5,7 @@ import datetime
 
 # CRUD Methods for User
 # Add new user
-@app.route('/users', methods=['POST'])
+@app.route('/user', methods=['POST'])
 def add_user():
     try:
         data = request.get_json()
@@ -19,14 +19,19 @@ def add_user():
 
         return "User added successfully"
     except Exception as e:
-        return f"Error adding user: {str(e)}"
+        error_message = {"error": f"Error adding user: {str(e)}"}
+        return jsonify(error_message)
 
 # Read user info
 @app.route('/user/<user_id>', methods=['GET'])
 def get_user(user_id):
-    user = User.query.get(user_id)
-    return jsonify({"name" : user.name, "email" : user.email})
-# return f'Name: {user.name}, Email: {user.email}'
+    try:
+        user = User.query.get(user_id)
+        return jsonify({"name" : user.name, "email" : user.email})
+        # return f'Name: {user.name}, Email: {user.email}'
+    except Exception as e:
+        error_message = {"error": f"Error finding user: {str(e)}"}
+        return jsonify(error_message)
 
 # Update user's name
 @app.route('/user/<user_id>', methods=['PUT'])
@@ -41,15 +46,20 @@ def update_user(user_id):
         db.session.commit()
         return "User updated successfully"
     except Exception as e:
-        return f"Error updating user: {str(e)}"
+        error_message = {"error": f"Error updating user: {str(e)}"}
+        return jsonify(error_message)
 
 # Delete user account
 @app.route('/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    user = User.query.get(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return "User deleted successfully"
+    try:
+        user = User.query.get(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return "User deleted successfully"
+    except Exception as e:
+        error_message = {"error": f"Error deleting user: {str(e)}"}
+        return jsonify(error_message)
 
 
 # CRUD Methods for TotalBudget
@@ -57,14 +67,14 @@ def delete_user(user_id):
 @app.route('/total_budget/<user_id>', methods=['POST'])
 def add_total_budget(user_id):
     try:
-        user = User.query.get(user_id)
+        #user = User.query.get(user_id)
         timestamp = datetime.datetime.now()
 
         data = request.get_json()
         total_budget = data.get('total_budget')
 
         new_total_budget = TotalBudget(
-            user_id=user,
+            user_id=user_id,
             timestamp=timestamp,
             total_budget=total_budget
         )
@@ -73,17 +83,24 @@ def add_total_budget(user_id):
 
         return "Total Budget added successfully"
     except Exception as e:
-        return f"Error adding total budget: {str(e)}"
+        error_message = {"error": f"Error adding total budget: {str(e)}"}
+        return jsonify(error_message)
 
 # Read the latest total budget
 @app.route('/total_budget/<user_id>', methods=['GET'])
-def get_total_budget(user_id):    
-    total_budget = TotalBudget.query.filter(
-        TotalBudget.user_id == user_id
-    ).order_by(TotalBudget.timestamp.desc()).first()
-    
-    if total_budget:
-        return ({"totalBudget": total_budget.total_budget})
+def get_total_budget(user_id):
+    try:
+        total_budget = TotalBudget.query.filter(
+            TotalBudget.user_id == user_id
+        ).order_by(TotalBudget.timestamp.desc()).first()
+        
+        if total_budget:
+            return ({"totalBudget": total_budget.total_budget})
+        else:
+            return "Total Budget not found"
+    except Exception as e:
+        error_message = {"error": f"Error finding total budget: {str(e)}"}
+        return jsonify(error_message)
 
 # Update Budget based on the latest timestamp in the database
 @app.route('/total_budget/<user_id>', methods=['PUT'])
@@ -107,25 +124,30 @@ def update_total_budget(user_id):
         else:
             return "Total Budget not found"
     except Exception as e:
-        return f"Error updating total budget: {str(e)}"
+        error_message = {"error": f"Error updating total budget: {str(e)}"}
+        return jsonify(error_message)
     
 # Delete Budget based on latest timestamp in the database
 @app.route('/total_budget/<user_id>', methods=['DELETE'])
 def delete_total_budget(user_id):
-    #current_month = datetime.datetime.now().strftime('%B')  # Get the full month name (e.g., January) for returning error message
-    #current_year = datetime.datetime.now().strftime('%Y')   # Get the four-digit year (e.g., 2023) for returning error message
+    try:
+        #current_month = datetime.datetime.now().strftime('%B')  # Get the full month name (e.g., January) for returning error message
+        #current_year = datetime.datetime.now().strftime('%Y')   # Get the four-digit year (e.g., 2023) for returning error message
 
-    total_budget = TotalBudget.query.filter(
-        TotalBudget.user_id == user_id
-    ).order_by(TotalBudget.timestamp.desc()).first()
+        total_budget = TotalBudget.query.filter(
+            TotalBudget.user_id == user_id
+        ).order_by(TotalBudget.timestamp.desc()).first()
 
-    if total_budget:
-        db.session.delete(total_budget)
-        db.session.commit()
+        if total_budget:
+            db.session.delete(total_budget)
+            db.session.commit()
 
-        return "Total Budget deleted successfully"
-    else:
-        return "Total Budget not found"
+            return "Total Budget deleted successfully"
+        else:
+            return "Total Budget not found"
+    except Exception as e:
+        error_message = {"error": f"Error deleting total budget: {str(e)}"}
+        return jsonify(error_message)
     
 
 # CRUD Methods for Category
@@ -133,7 +155,7 @@ def delete_total_budget(user_id):
 @app.route('/category/<user_id>', methods=['POST'])
 def add_category(user_id):
     try:
-        user = User.query.get(user_id)
+        #user = User.query.get(user_id)
         data = request.get_json()
 
         name = data.get('name')
@@ -141,7 +163,7 @@ def add_category(user_id):
         timestamp = datetime.datetime.now()
 
         new_category = Category(
-            user_id=user,
+            user_id=user_id,
             name=name,
             percent=percent,
             timestamp=timestamp
@@ -152,27 +174,36 @@ def add_category(user_id):
 
         return "Category added successfully"
     except Exception as e:
-        return f"Error adding category: {str(e)}"
+        error_message = {"error": f"Error adding category: {str(e)}"}
+        return jsonify(error_message)
 
 # Read all categories based on the latest month
-@app.route('/categories/<user_id>', methods=['GET'])
+@app.route('/categories/<user_id>', methods=['GET']) #check the route name with the team
 def get_categories(user_id):
-    current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
-    categories = Category.query.filter(
-        and_(
-            Category.user_id == user_id,
-            extract('month', Category.timestamp) == current_month
-        )
-    ).order_by(Category.timestamp.desc()).all()
-    
-    category_info = []
-    for category in categories:
-        category_info.append({
-            "name": category.name,
-            "percent": category.percent
-        })
-    
-    return jsonify(category_info)
+    try:
+        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+        categories = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+                extract('month', Category.timestamp) == current_month
+            )
+        ).order_by(Category.timestamp.desc()).all()
+        
+        category_info = []
+        for category in categories:
+            category_info.append({
+                "name": category.name,
+                "percent": category.percent
+            })
+        
+        return jsonify(category_info)
+    except Exception as e:
+        error_message = {"error": f"Error finding categories: {str(e)}"}
+        return jsonify(error_message)
+
+# Create a GET route
+# To return a category
+# Based on just the category_id
 
 # Update category based on user_id and name. Updating the name and percent 
 # (note: frontend will need to return the previous name of the renamed category if the name was changed)
@@ -206,26 +237,31 @@ def update_category(user_id, category_name):
         else:
             return "Category not found"
     except Exception as e:
-        return f"Error updating category: {str(e)}"
+        error_message = {"error": f"Error updating category: {str(e)}"}
+        return jsonify(error_message)
 
 # Delete category based on user_id and name 
 # (note: frontend will need to return the name of the category being deleted)
 @app.route('/category/<user_id>/<category_name>', methods=['DELETE'])
 def delete_category(user_id, category_name):
-    latest_category = Category.query.filter(
-        and_(
-            Category.user_id == user_id,
-            Category.name == category_name
-        )
-    ).order_by(Category.timestamp.desc()).first()
+    try:
+        latest_category = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+                Category.name == category_name
+            )
+        ).order_by(Category.timestamp.desc()).first()
 
-    if latest_category:
-        db.session.delete(latest_category)
-        db.session.commit()
+        if latest_category:
+            db.session.delete(latest_category)
+            db.session.commit()
 
-        return "Category deleted successfully"
-    else:
-        return "Category not found"
+            return "Category deleted successfully"
+        else:
+            return "Category not found"
+    except Exception as e:
+        error_message = {"error": f"Error deleting category: {str(e)}"}
+        return jsonify(error_message)
 
 
 # CRUD Methods for Expense
@@ -233,7 +269,7 @@ def delete_category(user_id, category_name):
 @app.route('/expense/<user_id>', methods=['POST'])
 def add_expense(user_id):
     try:
-        user = User.query.get(user_id)
+        #user = User.query.get(user_id)
         data = request.get_json()
 
         store_name = data.get('store_name')
@@ -241,7 +277,7 @@ def add_expense(user_id):
         timestamp = datetime.datetime.now()
 
         new_expense = Expense(
-            user_id=user,
+            user_id=user_id,
             store_name=store_name,
             total_spent=total_spent,
             timestamp=timestamp
@@ -252,29 +288,34 @@ def add_expense(user_id):
 
         return "Expense added successfully"
     except Exception as e:
-        return f"Error adding expense: {str(e)}"
+        error_message = {"error": f"Error adding expense: {str(e)}"}
+        return jsonify(error_message)
 
 # Read all expenses based on the latest month
 @app.route('/expense/<user_id>', methods=['GET'])
 def get_expenses(user_id):
-    current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
-    expenses = Expense.query.filter(
-        and_(
-            Expense.user_id == user_id,
-            extract('month', Expense.timestamp) == current_month
-        )
-    ).order_by(Expense.timestamp.desc()).all()
+    try:
+        current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == current_month
+            )
+        ).order_by(Expense.timestamp.desc()).all()
 
-    expense_info = []
-    for expense in expenses:
-        expense_info.append({
-            "expense_id": expense.expense_id,
-            "store_name": expense.store_name,
-            "total_spent": expense.total_spent,
-            "timestamp": expense.timestamp
-        })
+        expense_info = []
+        for expense in expenses:
+            expense_info.append({
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp
+            })
 
-    return jsonify(expense_info)
+        return jsonify(expense_info)
+    except Exception as e:
+        error_message = {"error": f"Error finding expense: {str(e)}"}
+        return jsonify(error_message)
 
 # Update category based on user_id and expense_id. Updating the store_name and total_spent
 @app.route('/expense/<user_id>/<expense_id>', methods=['PUT'])
@@ -304,25 +345,30 @@ def update_expense(user_id, expense_id):
         else:
             return "Expense is not found"
     except Exception as e:
-        return f"Error updated expense: {str(e)}"
+        error_message = {"error": f"Error updating expense: {str(e)}"}
+        return jsonify(error_message)
 
 # Delete expense based on user_id and expense_id
 @app.route('/expense/<user_id>/<expense_id>', methods=['DELETE'])
 def delete_expense(user_id, expense_id):
-    expense = Expense.query.filter(
-            and_(
-                Expense.user_id == user_id,
-                Expense.expense_id == expense_id
-            )
-        ).first()
-    
-    if expense:
-        db.session.delete(expense)
-        db.session.commit()
+    try:
+        expense = Expense.query.filter(
+                and_(
+                    Expense.user_id == user_id,
+                    Expense.expense_id == expense_id
+                )
+            ).first()
+        
+        if expense:
+            db.session.delete(expense)
+            db.session.commit()
 
-        return "Expense deleted successfully"
-    else:
-        return "Expense not found"
+            return "Expense deleted successfully"
+        else:
+            return "Expense not found"
+    except Exception as e:
+        error_message = {"error": f"Error deleting expense: {str(e)}"}
+        return jsonify(error_message)
 
 # CRUD Methods for Sub_Expense
 # Add new sub_expense
@@ -360,35 +406,40 @@ def add_sub_expense(user_id, expense_id):
         else:
             return "User or Expense or Category not found"
     except Exception as e:
-        return f"Error adding sub-expense: {str(e)}"
+        error_message = {"error": f"Error adding sub-expense: {str(e)}"}
+        return jsonify(error_message)
 
 # Read all sub-expenses associated with Expense
 @app.route('/sub_expense/<expense_id>', methods=['GET'])
 def get_sub_expense(expense_id):
-    sub_expenses = SubExpense.query.filter(
-        and_(
-            SubExpense.expense_id == expense_id
-        )
-    ).all()
+    try:
+        sub_expenses = SubExpense.query.filter(
+            and_(
+                SubExpense.expense_id == expense_id
+            )
+        ).all()
 
-    sub_expense_info = []
-    for sub_expense in sub_expenses:
-        # Find the category name based on user_id and current sub_expense category_id
-        category_id = sub_expense.category_id
-        category = Category.query.filter(
-            Category.category_id == category_id
-        ).order_by(Category.timestamp.desc()).first()
+        sub_expense_info = []
+        for sub_expense in sub_expenses:
+            # Find the category name based on user_id and current sub_expense category_id
+            category_id = sub_expense.category_id
+            category = Category.query.filter(
+                Category.category_id == category_id
+            ).order_by(Category.timestamp.desc()).first()
 
-        sub_expense_info.append({
-            "sub_expense_id": sub_expense.sub_expense_id,
-            "spent": sub_expense.spent,
-            "category_name": category.name if category else None
-        })
-    
-    return jsonify(sub_expense_info)
+            sub_expense_info.append({
+                "sub_expense_id": sub_expense.sub_expense_id,
+                "spent": sub_expense.spent,
+                "category_name": category.name if category else None
+            })
+        
+        return jsonify(sub_expense_info)
+    except Exception as e:
+        error_message = {"error": f"Error finding sub expenses: {str(e)}"}
+        return jsonify(error_message)
 
 # Update sub-expense based on user_id and sub-expense_id
-@app.route('/sub_expense/<user_id>/<expense_id>/<sub_expense_id>', methods=['PUT'])
+@app.route('/sub_expense/<user_id>/<sub_expense_id>', methods=['PUT'])
 def update_sub_expense(user_id, sub_expense_id):
     try:
         data = request.get_json()
@@ -419,22 +470,27 @@ def update_sub_expense(user_id, sub_expense_id):
         else:
             return "Category not found for the specified user_id and category name"
     except Exception as e:
-        return f"Error updating subexpense: {str(e)}"
+        error_message = {"error": f"Error updating sub-expense: {str(e)}"}
+        return jsonify(error_message)
 
 # Delete a sub-expense using expense_id and sub_expense_id
 @app.route('/sub_expense/<expense_id>/<sub_expense_id>', methods=['DELETE'])
 def delete_sub_expense(expense_id, sub_expense_id):
-    sub_expense = SubExpense.query.filter(
-            and_(
-                SubExpense.expense_id == expense_id,
-                SubExpense.sub_expense_id == sub_expense_id
-            )
-        ).first()
-    
-    if sub_expense:
-        db.session.delete(sub_expense)
-        db.session.commit()
+    try:
+        sub_expense = SubExpense.query.filter(
+                and_(
+                    SubExpense.expense_id == expense_id,
+                    SubExpense.sub_expense_id == sub_expense_id
+                )
+            ).first()
+        
+        if sub_expense:
+            db.session.delete(sub_expense)
+            db.session.commit()
 
-        return "Sub-Expense deleted successfully"
-    else:
-        return "Sub-Expense not found"
+            return "Sub-Expense deleted successfully"
+        else:
+            return "Sub-Expense not found"
+    except Exception as e:
+        error_message = {"error": f"Error deleting sub expense: {str(e)}"}
+        return jsonify(error_message)
