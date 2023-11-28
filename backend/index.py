@@ -195,17 +195,52 @@ def update_user(user_id):
         return jsonify(error_message)
 
 # Delete user account
+# @app.route('/user/<user_id>', methods=['DELETE'])
+# def delete_user(user_id):
+#     try:
+#         user = User.query.get(user_id)
+#         db.session.delete(user)
+#         db.session.commit()
+#         return "User deleted successfully"
+#     except Exception as e:
+#         error_message = {"error": f"Error deleting user: {str(e)}"}
+#         return jsonify(error_message)
+
 @app.route('/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
+        # Find and delete all sub-expenses associated with the user
+        sub_expenses = SubExpense.query.join(Expense).filter(Expense.user_id == user_id).all()
+        for sub_expense in sub_expenses:
+            db.session.delete(sub_expense)
+
+        # Find and delete expenses associated with the user
+        expenses = Expense.query.filter_by(user_id=user_id).all()
+        for expense in expenses:
+            db.session.delete(expense)
+
+        # Find and delete categories associated with the user
+        categories = Category.query.filter_by(user_id=user_id).all()
+        for category in categories:
+            db.session.delete(category)
+
+        # Find and delete total budgets associated with the user
+        total_budgets = TotalBudget.query.filter_by(user_id=user_id).all()
+        for total_budget in total_budgets:
+            db.session.delete(total_budget)
+
+        # Finally, delete the user
         user = User.query.get(user_id)
         db.session.delete(user)
-        db.session.commit()
-        return "User deleted successfully"
-    except Exception as e:
-        error_message = {"error": f"Error deleting user: {str(e)}"}
-        return jsonify(error_message)
 
+        # Commit all changes
+        db.session.commit()
+
+        return "User and associated data deleted successfully"
+    except Exception as e:
+        db.session.rollback()
+        error_message = {"error": f"Error deleting user and associated data: {str(e)}"}
+        return jsonify(error_message)
 
 # CRUD Methods for TotalBudget
 # Add new budget
