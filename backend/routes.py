@@ -49,18 +49,41 @@ def update_user(user_id):
         error_message = {"error": f"Error updating user: {str(e)}"}
         return jsonify(error_message)
 
-# Delete user account
 @app.route('/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
+        # Find and delete all sub-expenses associated with the user
+        sub_expenses = SubExpense.query.join(Expense).filter(Expense.user_id == user_id).all()
+        for sub_expense in sub_expenses:
+            db.session.delete(sub_expense)
+
+        # Find and delete expenses associated with the user
+        expenses = Expense.query.filter_by(user_id=user_id).all()
+        for expense in expenses:
+            db.session.delete(expense)
+
+        # Find and delete categories associated with the user
+        categories = Category.query.filter_by(user_id=user_id).all()
+        for category in categories:
+            db.session.delete(category)
+
+        # Find and delete total budgets associated with the user
+        total_budgets = TotalBudget.query.filter_by(user_id=user_id).all()
+        for total_budget in total_budgets:
+            db.session.delete(total_budget)
+
+        # Finally, delete the user
         user = User.query.get(user_id)
         db.session.delete(user)
-        db.session.commit()
-        return "User deleted successfully"
-    except Exception as e:
-        error_message = {"error": f"Error deleting user: {str(e)}"}
-        return jsonify(error_message)
 
+        # Commit all changes
+        db.session.commit()
+
+        return "User and associated data deleted successfully"
+    except Exception as e:
+        db.session.rollback()
+        error_message = {"error": f"Error deleting user and associated data: {str(e)}"}
+        return jsonify(error_message)
 
 # CRUD Methods for TotalBudget
 # Add new budget
@@ -97,7 +120,8 @@ def get_total_budget(user_id):
         if total_budget:
             return ({"totalBudget": total_budget.total_budget})
         else:
-            return "Total Budget not found"
+            error_message = {"error": f"Total Budget not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error finding total budget: {str(e)}"}
         return jsonify(error_message)
@@ -122,7 +146,8 @@ def update_total_budget(user_id):
 
             return "Total Budget updated successfully"
         else:
-            return "Total Budget not found"
+            error_message = {"error": f"Total Budget not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error updating total budget: {str(e)}"}
         return jsonify(error_message)
@@ -144,7 +169,8 @@ def delete_total_budget(user_id):
 
             return "Total Budget deleted successfully"
         else:
-            return "Total Budget not found"
+            error_message = {"error": f"Total Budget not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error deleting total budget: {str(e)}"}
         return jsonify(error_message)
@@ -235,7 +261,8 @@ def update_category(user_id, category_name):
 
             return "Category updated successfully"
         else:
-            return "Category not found"
+            error_message = {"error": f"Category not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error updating category: {str(e)}"}
         return jsonify(error_message)
@@ -253,13 +280,30 @@ def delete_category(user_id, category_name):
         ).order_by(Category.timestamp.desc()).first()
 
         if latest_category:
+            # Find and delete sub-expenses associated with the latest category
+            sub_expenses_to_delete = SubExpense.query.filter(
+                and_(
+                    SubExpense.category_id == latest_category.category_id,
+                    SubExpense.expense_id.has(user_id=user_id)  # Filtering by user_id
+                )
+            ).all()
+
+            # Delete sub-expenses
+            for sub_expense in sub_expenses_to_delete:
+                db.session.delete(sub_expense)
+
+            # Delete the category itself
             db.session.delete(latest_category)
+
+            # Commit changes
             db.session.commit()
 
-            return "Category deleted successfully"
+            return "Category and related sub-expenses deleted successfully"
         else:
-            return "Category not found"
+            error_message = {"error": f"Category not found"}
+            return jsonify(error_message)
     except Exception as e:
+        db.session.rollback()
         error_message = {"error": f"Error deleting category: {str(e)}"}
         return jsonify(error_message)
 
@@ -343,7 +387,8 @@ def update_expense(user_id, expense_id):
 
             return "Expense updated successfully"
         else:
-            return "Expense is not found"
+            error_message = {"error": f"Expense not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error updating expense: {str(e)}"}
         return jsonify(error_message)
@@ -352,6 +397,17 @@ def update_expense(user_id, expense_id):
 @app.route('/expense/<user_id>/<expense_id>', methods=['DELETE'])
 def delete_expense(user_id, expense_id):
     try:
+        # Find and delete sub-expenses associated with the expense for the user
+        sub_expenses_to_delete = SubExpense.query.filter(
+            and_(
+                SubExpense.expense_id == expense_id,
+                SubExpense.expense_id.has(user_id=user_id)  # Filtering by user_id
+            )
+        ).all()
+        for sub_expense in sub_expenses_to_delete:
+            db.session.delete(sub_expense)
+
+        # Find and delete the expense
         expense = Expense.query.filter(
                 and_(
                     Expense.user_id == user_id,
@@ -363,10 +419,12 @@ def delete_expense(user_id, expense_id):
             db.session.delete(expense)
             db.session.commit()
 
-            return "Expense deleted successfully"
+            return "Expense and related sub-expenses deleted successfully"
         else:
-            return "Expense not found"
+            error_message = {"error": f"Expense not found"}
+            return jsonify(error_message)
     except Exception as e:
+        db.session.rollback()
         error_message = {"error": f"Error deleting expense: {str(e)}"}
         return jsonify(error_message)
 
@@ -404,7 +462,8 @@ def add_sub_expense(user_id, expense_id):
 
             return "SubExpense added successfully"
         else:
-            return "User or Expense or Category not found"
+            error_message = {"error": f"User or Expense or Category not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error adding sub-expense: {str(e)}"}
         return jsonify(error_message)
@@ -466,9 +525,11 @@ def update_sub_expense(user_id, sub_expense_id):
 
                 return "Sub-Expense updated successfully"
             else:
-                return "Sub-Expense not found for the specified sub_expense_id"
+                error_message = {"error": f"Sub-Expense not found for the specified sub_expense_id"}
+                return jsonify(error_message)
         else:
-            return "Category not found for the specified user_id and category name"
+            error_message = {"error": f"Category not found for the specified user_id and category name"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error updating sub-expense: {str(e)}"}
         return jsonify(error_message)
@@ -490,7 +551,8 @@ def delete_sub_expense(expense_id, sub_expense_id):
 
             return "Sub-Expense deleted successfully"
         else:
-            return "Sub-Expense not found"
+            error_message = {"error": f"Sub-Expense not found"}
+            return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error deleting sub expense: {str(e)}"}
         return jsonify(error_message)
