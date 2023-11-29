@@ -9,6 +9,8 @@ import datetime
 def add_user():
     try:
         data = request.get_json()
+        if(data.get('email') == '' or data.get('email') is None or data.get('name') == '' or data.get('name') is None):
+            raise Exception("Email or Name not specified")
 
         email = data.get('email')
         name = data.get('name')
@@ -40,6 +42,9 @@ def update_user(user_id):
         user = User.query.get(user_id)
 
         data = request.get_json()
+        if(data.get('name') == '' or data.get('name') is None):
+            raise Exception("Name not specified")
+        
         new_name = data.get('name')
         user.name = new_name
         
@@ -94,6 +99,9 @@ def add_total_budget(user_id):
         timestamp = datetime.datetime.now()
 
         data = request.get_json()
+        if(data.get('total_budget') == '' or data.get('total_budget') is None):
+            raise Exception("Total Budget not specified")
+        
         total_budget = data.get('total_budget')
 
         new_total_budget = TotalBudget(
@@ -136,6 +144,9 @@ def update_total_budget(user_id):
 
         if total_budget:
             data = request.get_json()
+
+            if(data.get('total_budget') == '' or data.get('total_budget') is None):
+                raise Exception("Total Budget not specified")
 
             new_total_budget = data.get('total_budget')
             total_budget.total_budget = new_total_budget
@@ -183,6 +194,9 @@ def add_category(user_id):
     try:
         #user = User.query.get(user_id)
         data = request.get_json()
+
+        if(data.get('percent') == '' or data.get('percent') is None or data.get('name') == '' or data.get('name') is None):
+            raise Exception("Name or Percent not specified")
 
         name = data.get('name')
         percent = data.get('percent')
@@ -247,8 +261,11 @@ def update_category(user_id, category_name):
         if latest_category:
             data = request.get_json()
 
-            new_name = data.get('new_name')
-            new_percent = data.get('new_percent')
+            if(data.get('percent') == '' or data.get('percent') is None or data.get('name') == '' or data.get('name') is None):
+                raise Exception("Name or Percent not specified")
+
+            new_name = data.get('name')
+            new_percent = data.get('percent')
 
             if new_name is not None:
                 latest_category.name = new_name
@@ -316,6 +333,9 @@ def add_expense(user_id):
         #user = User.query.get(user_id)
         data = request.get_json()
 
+        if(data.get('store_name') == '' or data.get('store_name') is None or data.get('total_spent') == '' or data.get('total_spent') is None):
+            raise Exception("Store Name or Total Spent not specified")
+
         store_name = data.get('store_name')
         total_spent = data.get('total_spent')
         timestamp = datetime.datetime.now()
@@ -374,6 +394,9 @@ def update_expense(user_id, expense_id):
 
         if expense:
             data = request.get_json()
+
+            if(data.get('store_name') == '' or data.get('store_name') is None or data.get('total_spent') == '' or data.get('total_spent') is None):
+                raise Exception("Store Name or Total Spent not specified")
 
             new_store_name = data.get('store_name')
             new_total_spent = data.get('total_spent')
@@ -439,6 +462,10 @@ def add_sub_expense(user_id, expense_id):
         expense = Expense.query.get(expense_id)
 
         data = request.get_json()
+
+        if(data.get('spent') == '' or data.get('spent') is None or data.get('category_name') == '' or data.get('category_name') is None):
+            raise Exception("Amount spent or Category Name not specified")
+
         spent = data.get('spent')
         category_name = data.get('category_name')
 
@@ -503,8 +530,11 @@ def update_sub_expense(user_id, sub_expense_id):
     try:
         data = request.get_json()
 
+        if(data.get('spent') == '' or data.get('spent') is None or data.get('category_name') == '' or data.get('category_name') is None):
+            raise Exception("Amount spent or Category Name not specified")
+
         category_name = data.get('category_name')
-        new_spent = data.get('new_spent')
+        new_spent = data.get('spent')
 
         # Find the latest category_id based on user_id and category_name
         latest_category = Category.query.filter(
