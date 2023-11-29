@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt -r /code/requ
 COPY . /code/
 
 #
-CMD ["gunicorn", "-b", "0.0.0.0", "index:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:80", "index:app"]
