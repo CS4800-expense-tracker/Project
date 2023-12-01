@@ -1,6 +1,12 @@
 import { Pressable } from "react-native";
-import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { bodyTextStyle } from "./body-text";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function AnimatedButton(props) {
   const bgColorProp = props.bgColor;
@@ -12,33 +18,46 @@ export default function AnimatedButton(props) {
   const viewStyling = props.viewStyle;
   const onPress = props.onPress;
 
-  const bgColor = useSharedValue(bgColorProp);
-  const textColor = useSharedValue(textColorProp);
+  const isHovered = useSharedValue(false);
 
   const buttonHoverIn = () => {
-    bgColor.value = withTiming(hoverBgColor);
-    textColor.value = withTiming(hoverTextColor);
+    isHovered.value = true;
   };
 
   const buttonHoverOut = () => {
-    bgColor.value = withTiming(bgColorProp);
-    textColor.value = withTiming(textColorProp);
+    isHovered.value = false;
   };
 
+  const animatedPressableStyle = useAnimatedStyle(() => {
+    const backgroundColor = isHovered.value
+      ? withTiming(hoverBgColor)
+      : withTiming(bgColorProp);
+
+    return { backgroundColor };
+  });
+
+  const animatedTextStyle = useAnimatedStyle(() => {
+    const textColorValue = isHovered.value
+      ? withTiming(hoverTextColor)
+      : withTiming(textColorProp);
+
+    return {
+      color: textColorValue,
+    };
+  });
+
   return (
-    <Pressable
-      onHoverIn={buttonHoverIn}
-      onHoverOut={buttonHoverOut}
+    <AnimatedPressable
+      onMouseEnter={buttonHoverIn}
+      onMouseLeave={buttonHoverOut}
       onPress={onPress}
-      style={buttonStyling}
+      style={[buttonStyling, viewStyling, animatedPressableStyle]}
     >
-      <Animated.View style={[viewStyling, { backgroundColor: bgColor }]}>
-        <Animated.Text
-          style={[bodyTextStyle(), { color: textColor, textAlign: "center" }]}
-        >
-          {textContent}
-        </Animated.Text>
-      </Animated.View>
-    </Pressable>
+      <Animated.Text
+        style={[bodyTextStyle(), animatedTextStyle, { textAlign: "center" }]}
+      >
+        {textContent}
+      </Animated.Text>
+    </AnimatedPressable>
   );
 }
