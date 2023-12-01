@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Link } from "@react-navigation/native";
 import AnimatedButton from "./animated-button";
@@ -10,22 +11,30 @@ export default function Landing() {
   const logoLb = require("./img/PennyWise_Logo_Lb.png");
   const logoDb = require("./img/PennyWise_Logo_Db.png");
 
+
+  const handleLogIn = () => {
+    fetch('http://127.0.0.1:5000/login')  
+      .then(response => response.json())
+      .then(data => console.log(data))
+      .catch(error => console.error(error));
+    return 
+  }
+
   return (
     <View style={styles.container}>
       <View
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
         <Image source={logoLb} style={styles.logo} />
-        <Link to={{ screen: "Overview" }}>
-          <AnimatedButton
-            bgColor={"#384718"}
-            hoverBgColor={"#BCEE51"}
-            textColor={"#fff"}
-            hoverTextColor={"#384718"}
-            text={"Log in"}
-            viewStyle={styles.headerButton}
-          />
-        </Link>
+        <AnimatedButton
+          bgColor={"#384718"}
+          hoverBgColor={"#BCEE51"}
+          textColor={"#fff"}
+          hoverTextColor={"#384718"}
+          text={"Log in"}
+          viewStyle={styles.headerButton}
+          onPress={handleLogIn}
+        />
       </View>
       <View style={[styles.sectionWidth, styles.hero, styles.sectionMargin]}>
         <View style={styles.rowSpaceBetween}>
