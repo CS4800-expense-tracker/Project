@@ -1,12 +1,12 @@
-import { View, StyleSheet } from "react-native";
+import { ScrollView, View, StyleSheet } from "react-native";
 
 export default function SectionView(props) {
   const children = props.children;
 
   return (
-    <View style={styles.rootView}>
+    <ScrollView contentContainerStyle={styles.rootView}>
       <View style={styles.childView}>{children}</View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -14,10 +14,10 @@ const styles = StyleSheet.create({
   rootView: {
     display: "flex",
     alignItems: "center",
-    width: "80%",
   },
   childView: {
     width: "90%",
     marginTop: 48,
+    paddingBottom: 64,
   },
 });

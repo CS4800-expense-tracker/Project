@@ -1,5 +1,6 @@
 import React from "react";
 import { Image, StyleSheet, Text, TextInput, View } from "react-native";
+import { Link } from "@react-navigation/native";
 import BodyText, { bodyTextStyle } from "./body-text";
 import Heading2 from "./heading2";
 import AnimatedButton from "./animated-button";
@@ -26,7 +27,7 @@ export default function BankLink() {
       >
         Enter your information below
       </Heading2>
-      <View style={styles.infoCard}>
+      <View style={[styles.infoCard, styles.bottomMarginMedium]}>
         <Heading2 style={[styles.infoDescription, styles.textColor]}>
           Username
         </Heading2>
@@ -77,6 +78,13 @@ export default function BankLink() {
           text={"Submit"}
           viewStyle={styles.submitButtonView}
         />
+      </View>
+      <View style={{ paddingBottom: 64 }}>
+        <Link to={{ screen: "Overview" }}>
+          <BodyText style={[styles.textColor, styles.skipSetup]}>
+            Setup later
+          </BodyText>
+        </Link>
       </View>
     </View>
   );
@@ -138,5 +146,9 @@ const styles = StyleSheet.create({
   submitButtonView: {
     borderRadius: 32,
     paddingVertical: 8,
+  },
+  skipSetup: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#333",
   },
 });

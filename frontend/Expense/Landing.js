@@ -1,4 +1,11 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { Link } from "@react-navigation/native";
 import AnimatedButton from "./animated-button";
 import Heading1 from "./heading1";
@@ -9,6 +16,9 @@ export default function Landing() {
   const tempImage = require("./img/placeholder.png");
   const logoLb = require("./img/PennyWise_Logo_Lb.png");
   const logoDb = require("./img/PennyWise_Logo_Db.png");
+
+  const { height, width } = useWindowDimensions();
+  const styles = makeStyles(width);
 
   return (
     <View style={styles.container}>
@@ -38,11 +48,12 @@ export default function Landing() {
               intelligent.
             </BodyText>
             <View style={styles.rowFlex}>
-              <Link to={{ screen: "Overview" }}>
+              <Link to={{ screen: "Setup" }}>
                 <AnimatedButton
                   bgColor={"#558033"}
                   hoverBgColor={"#384718"}
                   textColor={"#F2FCDC"}
+                  hoverTextColor={"#F2FCDC"}
                   text={"Get started"}
                   viewStyle={styles.heroButton}
                 />
@@ -103,7 +114,13 @@ export default function Landing() {
         </View>
       </View>
       <View style={[styles.marginBottom]}>
-        <Heading1 style={[styles.h1, { marginBottom: 32, color: "#384718" }]}>
+        <Heading1
+          style={[
+            styles.h1,
+            styles.text,
+            { marginBottom: 32, textAlign: "center" },
+          ]}
+        >
           Seize the reins of your financial life
         </Heading1>
         <Link
@@ -134,6 +151,7 @@ export default function Landing() {
               bgColor={"#F2FCDC"}
               hoverBgColor={"#BCEE51"}
               textColor={"#384718"}
+              hoverTextColor={"#384718"}
               text={"Log in"}
               viewStyle={styles.headerButton}
             />
@@ -149,136 +167,139 @@ export default function Landing() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    display: "flex",
-    alignItems: "center",
-    backgroundColor: "#F2FCDC",
-  },
-  text: {
-    color: "#384718",
-  },
-  sectionWidth: {
-    width: "85%",
-  },
-  hero: {
-    backgroundColor: "#BCEE51",
-    borderRadius: 32,
-    paddingHorizontal: 64,
-    paddingVertical: 128,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 32,
-  },
-  rowSpaceBetween: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  rowFlex: {
-    display: "flex",
-    flexDirection: "row",
-  },
-  flexJustify: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "50%",
-  },
-  sectionMargin: {
-    marginBottom: 128,
-  },
-  logo: {
-    height: "100%",
-    width: undefined,
-    aspectRatio: "37 / 7",
-    resizeMode: "contain",
-  },
-  header: {
-    paddingTop: 40,
-    paddingBottom: 60,
-  },
-  headerButton: {
-    borderRadius: 32,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  heroButton: {
-    paddingHorizontal: 64,
-    paddingVertical: 8,
-    borderRadius: 32,
-  },
-  heroLeft: {
-    flexBasis: "40%",
-    display: "flex",
-  },
-  heroImage: {
-    height: "100%",
-    width: undefined,
-    aspectRatio: "7 / 4",
-    resizeMode: "contain",
-  },
-  h1: {
-    marginBottom: 16,
-  },
-  h1Small: {
-    fontSize: 48,
-    marginBottom: 20,
-  },
-  featureImages: {
-    width: 800,
-    height: 450,
-    borderRadius: 32,
-  },
-  featureText: {
-    textAlign: "center",
-  },
-  underline: {
-    // textDecorationLine: "underline",
-    // textDecorationStyle: "solid",
-    // textDecorationColor: "#BCEE51",
-    paddingBottom: 2,
-    borderBottomWidth: 4,
-    borderBottomColor: "#BCEE51",
-  },
-  shadow: {
-    backgroundColor: "#fff",
-    borderRadius: 32,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.15,
-    shadowRadius: 32,
-  },
-  featureButton: {
-    width: "70%",
-    alignSelf: "center",
-  },
-  featureButtonView: {
-    borderRadius: 32,
-    paddingVertical: 8,
-  },
-  footerContainer: {
-    width: "100%",
-    backgroundColor: "#131808",
-  },
-  footer: {
-    paddingTop: 32,
-    paddingBottom: 32,
-    alignSelf: "center",
-  },
-  footerText: {
-    color: "#84A739",
-    fontSize: 12,
-    alignSelf: "center",
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  footerCopyright: {
-    width: "85%",
-    alignSelf: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#84A739",
-  },
-});
+const makeStyles = (width) =>
+  StyleSheet.create({
+    container: {
+      display: "flex",
+      alignItems: "center",
+      backgroundColor: "#F2FCDC",
+    },
+    text: {
+      color: "#384718",
+    },
+    sectionWidth: {
+      width: width < 1280 ? "90%" : "85%",
+    },
+    hero: {
+      backgroundColor: "#BCEE51",
+      borderRadius: 32,
+      paddingHorizontal: 64,
+      paddingVertical: 128,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.15,
+      shadowRadius: 32,
+    },
+    rowSpaceBetween: {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    rowFlex: {
+      display: "flex",
+      flexDirection: "row",
+    },
+    flexJustify: {
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      width: "65%",
+    },
+    sectionMargin: {
+      marginBottom: 128,
+    },
+    logo: {
+      height: "100%",
+      width: undefined,
+      aspectRatio: "37 / 7",
+      resizeMode: "contain",
+    },
+    header: {
+      paddingTop: 40,
+      paddingBottom: 60,
+    },
+    headerButton: {
+      borderRadius: 32,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    heroButton: {
+      paddingHorizontal: 64,
+      paddingVertical: 8,
+      borderRadius: 32,
+    },
+    heroLeft: {
+      flexBasis: "40%",
+      display: "flex",
+    },
+    heroImage: {
+      height: "100%",
+      width: undefined,
+      aspectRatio: "7 / 4",
+      resizeMode: "contain",
+    },
+    h1: {
+      marginBottom: 16,
+    },
+    h1Small: {
+      fontSize: 48,
+      marginBottom: 20,
+    },
+    featureImages: {
+      width: "65vw",
+      height: undefined,
+      aspectRatio: "16 / 9",
+      resizeMode: "contain",
+      borderRadius: 32,
+    },
+    featureText: {
+      textAlign: "center",
+    },
+    underline: {
+      // textDecorationLine: "underline",
+      // textDecorationStyle: "solid",
+      // textDecorationColor: "#BCEE51",
+      paddingBottom: 2,
+      borderBottomWidth: 4,
+      borderBottomColor: "#BCEE51",
+    },
+    shadow: {
+      backgroundColor: "#fff",
+      borderRadius: 32,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 16 },
+      shadowOpacity: 0.15,
+      shadowRadius: 32,
+    },
+    featureButton: {
+      width: "70%",
+      alignSelf: "center",
+    },
+    featureButtonView: {
+      borderRadius: 32,
+      paddingVertical: 8,
+    },
+    footerContainer: {
+      width: "100%",
+      backgroundColor: "#131808",
+    },
+    footer: {
+      paddingTop: 32,
+      paddingBottom: 32,
+      alignSelf: "center",
+    },
+    footerText: {
+      color: "#84A739",
+      fontSize: 12,
+      alignSelf: "center",
+      paddingTop: 8,
+      paddingBottom: 8,
+    },
+    footerCopyright: {
+      width: "85%",
+      alignSelf: "center",
+      borderTopWidth: 1,
+      borderTopColor: "#84A739",
+    },
+  });
