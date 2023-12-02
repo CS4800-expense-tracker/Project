@@ -500,31 +500,31 @@ def add_expense(user_id):
         error_message = {"error": f"Error adding expense: {str(e)}"}
         return jsonify(error_message)
 
-# Read all expenses based on the latest month
-@app.route('/expense/<user_id>', methods=['GET'])
-def get_expenses(user_id):
-    try:
-        current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
-        expenses = Expense.query.filter(
-            and_(
-                Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
-            )
-        ).order_by(Expense.timestamp.desc()).all()
+# # Read all expenses based on the latest month
+# @app.route('/expense/<user_id>', methods=['GET'])
+# def get_expenses(user_id):
+#     try:
+#         current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
+#         expenses = Expense.query.filter(
+#             and_(
+#                 Expense.user_id == user_id,
+#                 extract('month', Expense.timestamp) == current_month
+#             )
+#         ).order_by(Expense.timestamp.desc()).all()
 
-        expense_info = []
-        for expense in expenses:
-            expense_info.append({
-                "expense_id": expense.expense_id,
-                "store_name": expense.store_name,
-                "total_spent": expense.total_spent,
-                "timestamp": expense.timestamp
-            })
+#         expense_info = []
+#         for expense in expenses:
+#             expense_info.append({
+#                 "expense_id": expense.expense_id,
+#                 "store_name": expense.store_name,
+#                 "total_spent": expense.total_spent,
+#                 "timestamp": expense.timestamp
+#             })
 
-        return jsonify(expense_info)
-    except Exception as e:
-        error_message = {"error": f"Error finding expense: {str(e)}"}
-        return jsonify(error_message)
+#         return jsonify(expense_info)
+#     except Exception as e:
+#         error_message = {"error": f"Error finding expense: {str(e)}"}
+#         return jsonify(error_message)
 
 # Update category based on user_id and expense_id. Updating the store_name and total_spent
 @app.route('/expense/<user_id>/<expense_id>', methods=['PUT'])
@@ -652,7 +652,7 @@ def get_sub_expense(expense_id):
 
         sub_expense_info = []
         for sub_expense in sub_expenses:
-            # Find the category name based on user_id and current sub_expense category_id
+            # Find the category name based on category_id and current sub_expense
             category_id = sub_expense.category_id
             category = Category.query.filter(
                 Category.category_id == category_id
@@ -731,6 +731,93 @@ def delete_sub_expense(expense_id, sub_expense_id):
     except Exception as e:
         error_message = {"error": f"Error deleting sub expense: {str(e)}"}
         return jsonify(error_message)
+
+# Creating a route that returns the last 5 expenses of the user
+@app.route('/last_five_expenses/<user_id>', methods=['GET'])
+def last_five_expenses(user_id):
+    try:
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id
+            )
+        ).order_by(Expense.timestamp.desc()).limit(5).all()
+
+        expense_info = []
+        for expense in expenses:
+            expense_info.append({
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp
+            })
+        
+        # if expense_info:
+        #     return jsonify(expense_info)
+        # else:
+        #     error_message = {"error": f"User does not have any expenses yet"}
+        #     return jsonify(error_message)
+
+        return jsonify(expense_info)
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Creating a route that returns the newest 10 expenses and sub-expenses based on the page number
+# so if the user is on page 1, return the news 10 expenses and their sub-expenses
+@app.route('/expenses/<user_id>/<page_num>', methods=['GET'])
+def get_expenses(user_id, page_num):
+    try:
+        start = (int(page_num)-1)*10
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id
+            )
+        ).order_by(Expense.timestamp.desc()).offset(start).limit(10).all()
+
+        expense_info = []
+        for expense in expenses:
+            expense_data = {
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp,
+                "sub_expenses": []
+            }
+
+            sub_expenses = SubExpense.query.filter(
+                and_(
+                    SubExpense.expense_id == expense.expense_id
+                )
+            ).all()
+            if sub_expenses:
+                for sub_expense in sub_expenses:
+                    # Find the category name based on category_id and current sub_expense
+                    category_id = sub_expense.category_id
+                    category = Category.query.filter(
+                        Category.category_id == category_id
+                    ).order_by(Category.timestamp.desc()).first()
+
+                    sub_expense_data = {
+                        "sub_expense_id": sub_expense.sub_expense_id,
+                        "spent": sub_expense.spent,
+                        "category_name": category.name if category else None
+                    }
+                    expense_data["sub_expenses"].append(sub_expense_data)
+            expense_info.append(expense_data)
+        
+        if expense_info:
+            return jsonify(expense_info)
+        else:
+            error_message = {"error": f"Expenses not found"}
+            return jsonify(error_message)
+
+        # return jsonify(expense_info)
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+
 
 
 if __name__ == "__main__":
