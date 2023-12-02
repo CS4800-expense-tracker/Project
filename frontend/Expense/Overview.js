@@ -6,6 +6,8 @@ import BodyText from "./body-text";
 import RecentExpense from "./recent-expense";
 import Heading1 from "./heading1";
 import Heading2 from "./heading2";
+import { useState } from "react";
+import * as Progress from "react-native-progress";
 
 export default function Overview() {
   const squareIcon = require("./img/square.svg");
@@ -28,6 +30,28 @@ export default function Overview() {
     "In-N-Out Burger",
     "Edison",
     "Amazon",
+  ];
+  const expenseCategories = [
+    {
+      expenseName: "Groceries",
+      spent: 160,
+      total: 400,
+    },
+    {
+      expenseName: "Utilities",
+      spent: 240,
+      total: 300,
+    },
+    {
+      expenseName: "Electronics",
+      spent: 15,
+      total: 100,
+    },
+    {
+      expenseName: "Cars",
+      spent: 130,
+      total: 200,
+    },
   ];
 
   const pieChartSeries = getChartSeries();
@@ -130,6 +154,30 @@ export default function Overview() {
             </View>
           </View>
         </View>
+        <View style={styles.subsectionContainer}>
+          <Heading2 style={[styles.textColor, styles.h2Small]}>
+            Expense Categories
+          </Heading2>
+          {expenseCategories.map((element) => (
+            <View>
+              <Heading2 style={[styles.textColor, styles.h2XSmall]}>
+                {element.expenseName}
+              </Heading2>
+              <Progress.Bar
+                progress={element.spent / element.total}
+                color={"#558033"}
+                width={null}
+                height={24}
+                borderRadius={32}
+                unfilledColor="#ccd9c2"
+                style={{ marginBottom: 8 }}
+              />
+              <BodyText style={[styles.textColor, { marginBottom: 32 }]}>
+                ${element.spent} spent out of ${element.total} total budget
+              </BodyText>
+            </View>
+          ))}
+        </View>
         <View style={[styles.subsectionContainer, { marginBottom: 0 }]}>
           <Heading2 style={[styles.textColor, styles.h2Small]}>
             Recent Expenses
@@ -184,6 +232,10 @@ const styles = StyleSheet.create({
   h2Small: {
     fontSize: 28,
     marginBottom: 32,
+  },
+  h2XSmall: {
+    fontSize: 24,
+    marginBottom: 8,
   },
   spaceBetween: {
     display: "flex",
