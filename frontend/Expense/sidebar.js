@@ -1,5 +1,9 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { Link } from "@react-navigation/native";
 
 export default function Sidebar(props) {
@@ -10,74 +14,99 @@ export default function Sidebar(props) {
   const expensesIcon = require("./img/receipt.svg");
   const accountIcon = require("./img/person-circle.svg");
 
-  const overviewSectionBgColor = useSharedValue(
-    page === "overview" ? "#384718" : "#131808"
-  );
-  const expensesSectionBgColor = useSharedValue(
-    page === "expenses" ? "#384718" : "#131808"
-  );
-  const accountSectionBgColor = useSharedValue(
-    page === "account" ? "#384718" : "#131808"
-  );
-  const logOutColor = useSharedValue("#84A739");
+  const overviewIsHovered = useSharedValue(false);
+  const expensesIsHovered = useSharedValue(false);
+  const accountIsHovered = useSharedValue(false);
+  const logOutIsHovered = useSharedValue(false);
 
-  const overviewSectionHoverIn = () => {
-    overviewSectionBgColor.value = withTiming(
-      page === "overview" ? "#4b5f20" : "#263010"
-    );
-  };
-  const overviewSectionHoverOut = () => {
-    overviewSectionBgColor.value = withTiming(
-      page === "overview" ? "#384718" : "#131808"
-    );
+  const overviewHoverIn = () => {
+    overviewIsHovered.value = true;
   };
 
-  const expensesSectionHoverIn = () => {
-    expensesSectionBgColor.value = withTiming(
-      page === "expenses" ? "#4b5f20" : "#263010"
-    );
-  };
-  const expensesSectionHoverOut = () => {
-    expensesSectionBgColor.value = withTiming(
-      page === "expenses" ? "#384718" : "#131808"
-    );
+  const overviewHoverOut = () => {
+    overviewIsHovered.value = false;
   };
 
-  const accountSectionHoverIn = () => {
-    accountSectionBgColor.value = withTiming(
-      page === "account" ? "#4b5f20" : "#263010"
-    );
+  const expensesHoverIn = () => {
+    expensesIsHovered.value = true;
   };
 
-  const accountSectionHoverOut = () => {
-    accountSectionBgColor.value = withTiming(
-      page === "account" ? "#384718" : "#131808"
-    );
+  const expensesHoverOut = () => {
+    expensesIsHovered.value = false;
+  };
+
+  const accountHoverIn = () => {
+    accountIsHovered.value = true;
+  };
+
+  const accountHoverOut = () => {
+    accountIsHovered.value = false;
   };
 
   const logOutHoverIn = () => {
-    logOutColor.value = withTiming("#bcee51");
+    logOutIsHovered.value = true;
   };
 
   const logOutHoverOut = () => {
-    logOutColor.value = withTiming("#84A739");
+    logOutIsHovered.value = false;
   };
+
+  const animatedOverviewStyle = useAnimatedStyle(() => {
+    const bgColor = page === "overview" ? "#384718" : "#131808";
+    const hoverBgColor = page === "overview" ? "#4b5f20" : "#263010";
+    const backgroundColor = overviewIsHovered.value
+      ? withTiming(hoverBgColor)
+      : withTiming(bgColor);
+
+    return { backgroundColor };
+  });
+
+  const animatedExpensesStyle = useAnimatedStyle(() => {
+    const bgColor = page === "expenses" ? "#384718" : "#131808";
+    const hoverBgColor = page === "expenses" ? "#4b5f20" : "#263010";
+    const backgroundColor = expensesIsHovered.value
+      ? withTiming(hoverBgColor)
+      : withTiming(bgColor);
+
+    return { backgroundColor };
+  });
+
+  const animatedAccountStyle = useAnimatedStyle(() => {
+    const bgColor = page === "account" ? "#384718" : "#131808";
+    const hoverBgColor = page === "account" ? "#4b5f20" : "#263010";
+    const backgroundColor = accountIsHovered.value
+      ? withTiming(hoverBgColor)
+      : withTiming(bgColor);
+
+    return { backgroundColor };
+  });
+
+  const animatedLogOutStyle = useAnimatedStyle(() => {
+    const textColorValue = logOutIsHovered.value
+      ? withTiming("#bcee51")
+      : withTiming("#84A739");
+
+    return {
+      color: textColorValue,
+      borderBottomColor: textColorValue,
+    };
+  });
 
   return (
     <View style={styles.tabs}>
       <Image source={logoDb} style={styles.tabLogo} />
       <Link to={{ screen: "Overview" }}>
         <Pressable
-          onHoverIn={overviewSectionHoverIn}
-          onHoverOut={overviewSectionHoverOut}
-          style={styles.sectionButton}
+          onMouseEnter={overviewHoverIn}
+          onMouseLeave={overviewHoverOut}
+          style={[styles.sectionButton]}
         >
           <Animated.View
             style={[
               page === "overview"
                 ? styles.currentSectionButtonView
                 : styles.sectionButtonView,
-              { backgroundColor: overviewSectionBgColor },
+              animatedOverviewStyle,
             ]}
           >
             <Image
@@ -103,16 +132,16 @@ export default function Sidebar(props) {
       </Link>
       <Link to={{ screen: "Expenses" }}>
         <Pressable
-          onHoverIn={expensesSectionHoverIn}
-          onHoverOut={expensesSectionHoverOut}
-          style={styles.sectionButton}
+          onMouseEnter={expensesHoverIn}
+          onMouseLeave={expensesHoverOut}
+          style={[styles.sectionButton]}
         >
           <Animated.View
             style={[
               page === "expenses"
                 ? styles.currentSectionButtonView
                 : styles.sectionButtonView,
-              { backgroundColor: expensesSectionBgColor },
+              animatedExpensesStyle,
             ]}
           >
             <Image
@@ -138,16 +167,16 @@ export default function Sidebar(props) {
       </Link>
       <Link to={{ screen: "Account" }}>
         <Pressable
-          onHoverIn={accountSectionHoverIn}
-          onHoverOut={accountSectionHoverOut}
-          style={styles.sectionButton}
+          onMouseEnter={accountHoverIn}
+          onMouseLeave={accountHoverOut}
+          style={[styles.sectionButton]}
         >
           <Animated.View
             style={[
               page === "account"
                 ? styles.currentSectionButtonView
                 : styles.sectionButtonView,
-              { backgroundColor: accountSectionBgColor },
+              animatedAccountStyle,
             ]}
           >
             <Image
@@ -173,17 +202,13 @@ export default function Sidebar(props) {
       </Link>
       <Link to={{ screen: "Landing" }} style={styles.logOutLink}>
         <Pressable
-          onHoverIn={logOutHoverIn}
-          onHoverOut={logOutHoverOut}
+          onMouseEnter={logOutHoverIn}
+          onMouseLeave={logOutHoverOut}
           style={styles.logOutButton}
         >
           <View>
             <Animated.Text
-              style={[
-                styles.text,
-                styles.logOutText,
-                { color: logOutColor, borderColor: logOutColor },
-              ]}
+              style={[styles.text, styles.logOutText, animatedLogOutStyle]}
             >
               Log out
             </Animated.Text>
@@ -263,7 +288,7 @@ const styles = StyleSheet.create({
   },
   logOutText: {
     borderBottomWidth: 1,
-    borderColor: "#84A739",
+    // borderColor: "#84A739",
     // textDecorationLine: "underline",
     // textDecorationStyle: "solid",
     // textDecorationColor: "#84A739",

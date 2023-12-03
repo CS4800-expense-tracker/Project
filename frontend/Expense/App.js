@@ -1,5 +1,5 @@
-import { NavigationContainer } from "@react-navigation/native";
 import { ToastProvider } from 'react-native-toast-notifications'
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
   useFonts,
@@ -15,6 +15,14 @@ import Account from "./Account.js";
 import Login from "./Login.js";
 import Signup from "./Signup.js";
 import { AppContextProvider } from "./AppContext.js";
+
+const myTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: "transparent",
+  },
+};
 
 const linking = {
   config: {
@@ -44,7 +52,7 @@ export default function App() {
   return (
     <ToastProvider>
       <AppContextProvider>
-        <NavigationContainer linking={linking}>
+        <NavigationContainer linking={linking} theme={myTheme}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="Landing" component={Landing} />
             <Stack.Screen name="Overview" component={Overview} />
