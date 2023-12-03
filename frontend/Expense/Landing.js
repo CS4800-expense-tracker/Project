@@ -1,11 +1,5 @@
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions} from "react-native";
 import { Link } from "@react-navigation/native";
 import AnimatedButton from "./animated-button";
 import Heading1 from "./heading1";
@@ -26,7 +20,7 @@ export default function Landing() {
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
         <Image source={logoLb} style={styles.logo} />
-        <Link to={{ screen: "Overview" }}>
+        <Link to={{screen: "Login"}}>
           <AnimatedButton
             bgColor={"#384718"}
             hoverBgColor={"#BCEE51"}
@@ -48,7 +42,7 @@ export default function Landing() {
               intelligent.
             </BodyText>
             <View style={styles.rowFlex}>
-              <Link to={{ screen: "Setup" }}>
+              <Link to={{ screen: "Signup" }}>
                 <AnimatedButton
                   bgColor={"#558033"}
                   hoverBgColor={"#384718"}
@@ -124,7 +118,7 @@ export default function Landing() {
           Seize the reins of your financial life
         </Heading1>
         <Link
-          to={{ screen: "Overview" }}
+          to={{ screen: "Signup" }}
           style={[
             styles.sectionMargin,
             { display: "flex", justifyContent: "center" },
@@ -146,7 +140,7 @@ export default function Landing() {
           style={[styles.sectionWidth, styles.rowSpaceBetween, styles.footer]}
         >
           <Image source={logoDb} style={styles.logo} />
-          <Link to={{ screen: "Overview" }}>
+          <Link to={{ screen: "Login" }}>
             <AnimatedButton
               bgColor={"#F2FCDC"}
               hoverBgColor={"#BCEE51"}
