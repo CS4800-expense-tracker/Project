@@ -26,7 +26,7 @@ export default function Login({navigation}) {
   const [startLogin, setStartLogin] = useState(false)
   const { state: appContext, dispatch: appDispatch } = useContext(
     AppContext
-);
+  );
 
   function validateEmail(email) {
     const mail = String(email);
@@ -191,7 +191,6 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   twoButtons : {
-    width: "100%",
     borderRadius: 32,
     paddingVertical: 8,
     paddingHorizontal: 48

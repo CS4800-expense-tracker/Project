@@ -8,9 +8,28 @@ import Heading1 from "./heading1";
 import Heading2 from "./heading2";
 import { useState } from "react";
 import * as Progress from "react-native-progress";
+import { AppContext } from "./AppContext";
 
-export default function Overview() {
+export default function Overview({navigation}) {
   const squareIcon = require("./img/square.svg");
+  // TODO: populate this shit
+  // Check for user id and link bank
+  // If no link, then have notification over the thingy
+  // If no user id, send to sign up or log in
+
+  const { state: appContext, dispatch: appDispatch } = useContext(
+    AppContext
+  );
+
+  const user_id = appContext.userID
+  if(!user_id) {
+    navigation.navigate("Signup")
+  }
+
+  useEffect(() => {
+
+  }, [])
+
 
   const name = "John";
   const monthlyBudget = 1000;

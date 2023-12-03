@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   twoButtons : {
-    width: "100%",
     borderRadius: 32,
     paddingVertical: 8,
     paddingHorizontal: 48

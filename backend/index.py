@@ -272,7 +272,6 @@ def get_user(user_id):
     try:
         user = User.query.get(user_id)
         return jsonify({"name" : user.name, "email" : user.email})
-        # return f'Name: {user.name}, Email: {user.email}'
     except Exception as e:
         error_message = {"error": f"Error finding user: {str(e)}"}
         return jsonify(error_message)
