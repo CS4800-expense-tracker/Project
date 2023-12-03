@@ -12,29 +12,22 @@ export default function Landing() {
   const logoDb = require("./img/PennyWise_Logo_Db.png");
 
 
-  const handleLogIn = () => {
-    fetch('http://127.0.0.1:5000/login')  
-      .then(response => response.json())
-      .then(data => console.log(data))
-      .catch(error => console.error(error));
-    return 
-  }
-
   return (
     <View style={styles.container}>
       <View
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
         <Image source={logoLb} style={styles.logo} />
-        <AnimatedButton
-          bgColor={"#384718"}
-          hoverBgColor={"#BCEE51"}
-          textColor={"#fff"}
-          hoverTextColor={"#384718"}
-          text={"Log in"}
-          viewStyle={styles.headerButton}
-          onPress={handleLogIn}
-        />
+        <Link to={{screen: "Login"}}>
+          <AnimatedButton
+            bgColor={"#384718"}
+            hoverBgColor={"#BCEE51"}
+            textColor={"#fff"}
+            hoverTextColor={"#384718"}
+            text={"Log in"}
+            viewStyle={styles.headerButton}
+          />
+        </Link>
       </View>
       <View style={[styles.sectionWidth, styles.hero, styles.sectionMargin]}>
         <View style={styles.rowSpaceBetween}>
@@ -47,7 +40,7 @@ export default function Landing() {
               intelligent.
             </BodyText>
             <View style={styles.rowFlex}>
-              <Link to={{ screen: "Overview" }}>
+              <Link to={{ screen: "Signup" }}>
                 <AnimatedButton
                   bgColor={"#558033"}
                   hoverBgColor={"#384718"}
@@ -116,7 +109,7 @@ export default function Landing() {
           Seize the reins of your financial life
         </Heading1>
         <Link
-          to={{ screen: "Overview" }}
+          to={{ screen: "Signup" }}
           style={[
             styles.sectionMargin,
             { display: "flex", justifyContent: "center" },
@@ -138,7 +131,7 @@ export default function Landing() {
           style={[styles.sectionWidth, styles.rowSpaceBetween, styles.footer]}
         >
           <Image source={logoDb} style={styles.logo} />
-          <Link to={{ screen: "Overview" }}>
+          <Link to={{ screen: "Login" }}>
             <AnimatedButton
               bgColor={"#F2FCDC"}
               hoverBgColor={"#BCEE51"}

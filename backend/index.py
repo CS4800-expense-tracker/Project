@@ -3,17 +3,19 @@ from os import getenv, environ as env
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
 from dotenv import load_dotenv, find_dotenv
-from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request
+from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request, Response
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from sqlalchemy import and_, extract
 import datetime
 from openai import OpenAI
+from flask_bcrypt import Bcrypt
 
 import plaid
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
+from plaid.model.transactions_sync_request import TransactionsSyncRequest
 from plaid.model.products import Products
 from plaid.model.country_code import CountryCode
 from plaid.api import plaid_api
@@ -31,8 +33,10 @@ app.secret_key = env.get("APP_SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = env.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
 client = OpenAI()
+bcrypt = Bcrypt(app) 
 
 
 # easier way to switch development and sandbox keys
@@ -84,10 +88,11 @@ class User(db.Model):
     plaid_access_token = db.Column(db.Text, nullable=True)
     plaid_item_id = db.Column(db.Text, nullable=True)
     cursor = db.Column(db.String(255), nullable=True)
+    password = db.Column(db.String(255), nullable=False)
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.user_id}, email={self.email}, name={self.name}, plaid_access_token={self.plaid_access_token}, plaid_item_id={self.plaid_item_id} />'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}, plaid_access_token={self.plaid_access_token}, plaid_item_id={self.plaid_item_id}, password={self.password} />'
 
 class TotalBudget(db.Model):
     budget_id = db.Column(db.Integer, primary_key=True)
@@ -134,6 +139,10 @@ class SubExpense(db.Model):
 
 
 """             STARTING ROUTES SECTION          """
+# @app.before_request
+# def basic_authentication():
+#     if request.method.lower() == 'options':
+#         return Response()
 
 @app.route("/")
 def home():
@@ -150,72 +159,91 @@ def home():
     Cause for a big table this will take up a LOT of memory  
     """    
     return "Hello World"
-## TODO: Make a signup route
-## after a user logs in, we get back a token that contains user information. We can use that
-## to pull up their shit in the db
 
-@app.route("/login")
+@app.route("/login", methods=["POST"])
 def login():
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True)
-    )
+    ## check if user exists in database with their password. If yes, return userID, if no, return error
+    try:
+        data = request.get_json()
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
-@app.route("/signup")
+        email = data.get('email')
+        password = data.get('password')
+
+        ## verify user exists in db
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) < 1 or curr_user == []):
+            raise Exception("User not found in DB")
+        
+        ## now that we know the user exists, check to see that the password is correct
+        is_valid = bcrypt.check_password_hash(curr_user[0].password, password) 
+
+        if(is_valid):
+            sending_dict = {}
+            if(curr_user[0].plaid_access_token is not None):
+                sending_dict["has_plaid_token"] = True
+            sending_dict["user_id"] = curr_user[0].user_id
+            return jsonify(sending_dict)
+        else:
+            raise Exception("Invalid password")
+
+    except Exception as e:
+        error_message = {"error": f"Server Error: {str(e)}"}
+        return jsonify(error_message) 
+
+@app.route("/signup", methods=["POST"])
 def signup():
-    return oauth.auth0.authorize_redirect(
-        screen_hint="signup",
-        redirect_uri=url_for("callback", _external=True)
-    )
+    try:
+        data = request.get_json()
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
-@app.route("/callback", methods=["GET", "POST"])
-def callback():
-    token = oauth.auth0.authorize_access_token()
-    session["user"] = token
-    # need to add user to SQL if their user_metadata does not already contain a "user_id" field.
-    # user_email = token["userinfo"]["name"]
-    user_email = "testingEmail@emailGmail.com"
-    user_name = token["userinfo"]["nickname"]
-    user = db.session.query(User).filter(User.email == user_email).all()
+        email = data.get('email')
+        name = data.get("name")
+        category_arr = data.get("categories")
+        budget = data.get("budget")
+        unhashed_password = data.get("password")
+        hashed_password = bcrypt.generate_password_hash(unhashed_password).decode('utf-8') 
 
-    # if there's no user in the db with the email, they must be just signing up
-    # so we add them to the database
-    if (user == []):
-        try:
-            new_user = User(email=user_email, name=user_name)
-            db.session.add(new_user)
-            db.session.commit()
-            user_info = db.session.query(User).filter(User.email == user_email).all()
-            return {"user_id": user_info[0].user_id}
-        except Exception as e:
-            error_message = {"error": f"Error adding user: {str(e)}"}
-            return jsonify(error_message) 
+        # Check to see if user already exists in server
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) > 0):
+            raise Exception("User already signed up")
 
-    return {"user_id": user[0].user_id}
+        ## adding to user category
+        new_user = User(email=email, name=name, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
 
+        user_id = new_user.user_id
+        
+        # adding all user defined categories
+        for category in category_arr:
+            category_name = category["name"]
+            category_percent = int(category["amount"]) // 100
 
+            new_category = Category(user_id=user_id, name=category_name, percent=category_percent, timestamp=datetime.datetime.now())
+            db.session.add(new_category)
+        db.session.commit()
 
-    # needs to return the user_metadata back to frontend? 
-    return redirect("/")
+        # creating the budget for the user
+        new_budget = TotalBudget(user_id=user_id, total_budget=budget, timestamp=datetime.datetime.now())
+        db.session.add(new_budget)
+        db.session.commit()
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(
-        "https://" + env.get("AUTH0_DOMAIN")
-        + "/v2/logout?"
-        + urlencode(
-            {
-                "returnTo": url_for("home", _external=True),
-                "client_id": env.get("AUTH0_CLIENT_ID"),
-            },
-            quote_via=quote_plus,
-        )
-    )
+        return jsonify({"user_id" : user_id})
+        
 
-
+    except Exception as e:
+        error_message = {"error": f"Server Error: {str(e)}"}
+        return jsonify(error_message) 
+    
+    
 ### All the routes work fine, just need to add some exception handlers ###
 ### Need to edit the DELETE methods so it can delete all the information held in other tables with the same user_id/category/expense ###
 
+## Removed all login routes from backend cause it just does not work lol
 
 # CRUD Methods for User
 # Add new user
@@ -802,7 +830,7 @@ def delete_sub_expense(expense_id, sub_expense_id):
         return jsonify(error_message)
 
 
-def categorize(expense_name):
+def categorize(expense_name, user_id):
     """
     This method should categorize expenses that are inputted by plaid
 
@@ -817,7 +845,9 @@ def categorize(expense_name):
     """
     # we need to build out category array because it's all a part of the db shit
     # so we can just build it in this method (?)
-    category_arr = None
+
+    # timestamp must be within this month
+    category_arr = db.session.query(Category.name, Category.category_id).filter(Category.user_id == user_id).all()
 
     completion = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -830,51 +860,66 @@ def categorize(expense_name):
     return (int(completion.choices[0].message.content))
 
 def plaid_upload_new_expense(item_id: str):
-    """
-    first, we need to make sure we have a new expense from plaid --> taken care of through the webhook
-    Need to figure out the shape of the fucking data sent over
-    need the user to upload this expense in 
-    
-    overall structure is to create a new expense, and then immediately create a subexpense for this with the full price of the transaction, a category chosen by chatgpt, and it should be connected to a user
+    try:
+        result = db.session.query(User).filter(User.item_id == item_id).all() 
+        if(result == [] or result is None):
+            raise Exception("User not found in db")
+        user = result[0]
 
-    - What does expense need
-        - timestamp
-        - total spent
-        - store name
-        - user id
-    - what does subexpense need
-        - expense id
-        - category id
-        - spent (will just be the total for us)
-    - what does categorize need
-        - category array
-            - List of tuples, each tuple needs category name and category id
-            - [(name, id_number)]
-        - Store name
-
-    - Lowk need to figure out the current user, all the categories, and stuff plaid sends over
-    - Lets first deal with SQL on our own end, hopefully we can somehow make that async or smth
-
-    ok final verdict
-    using sql we find the user from the plaid request
-    then we find the categories of that user
-    then we categorize the transaction
-    then we create a new expense, with the total being however much that new transaction was
-    then we make a new subexpense which is just a copy of the overall expense
-
-    First, we need to make a webhook or socket endpoint that receives the data from plaid
-    after it confirms that the data is recieved, and sends plaid a notif of said recieving, it needs to just call a diff method that does like, everything else
-    """
+        cursor = user.cursor
+        user_access_token = user.access_token
+        user_id = user.user_id
+        # New transaction updates since "cursor"
+        added = []
+        modified = []
+        removed = [] # Removed transaction ids
+        has_more = True
+        # Iterate through each page of new transaction updates for item
+        while has_more:
+            request = TransactionsSyncRequest(
+                access_token=user_access_token,
+                cursor=cursor,
+            )
+            response = plaid_client.transactions_sync(request)
+            # Add this page of results
+            added.extend(response['added'])
+            has_more = response['has_more']
+            # Update cursor to the next cursor
+            cursor = response['next_cursor']
 
 
-    """
-    we are given the item ID, and that's about it I think
+        # updating the user's cursor position
+        user.cursor = cursor
 
-    So we want to get the cursor and the user id for teh current user
 
-    """
+        ## adding all expense and subexpenses
+        for item in added:
+            total_spent = item["amount"]
+            timestamp = item["datetime"]
+            store_name = item["merchant_name"]
+            category_id = categorize(store_name, user_id)
 
-    pass
+            new_expense = Expense(
+                user_id=user_id,
+                store_name=store_name,
+                total_spent=total_spent,
+                timestamp=timestamp
+            )
+
+            db.session.add(new_expense)
+            db.session.commit()
+
+            new_sub_expense = SubExpense(
+                expense_id = new_expense.expense_id,
+                category_id = category_id,
+                spent = total_spent
+            )
+
+            db.session.add(new_sub_expense)
+            db.session.commit()
+    except Exception as e:
+        return f"Error: {e}"
+
 
 
 @app.route("/recieve_plaid_webhook", methods=['POST'])
