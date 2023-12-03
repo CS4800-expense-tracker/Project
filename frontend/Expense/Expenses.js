@@ -3,7 +3,6 @@ import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import { Link } from "@react-navigation/native";
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
-import { Header } from "@react-navigation/stack";
 import Heading1 from "./heading1";
 
 
