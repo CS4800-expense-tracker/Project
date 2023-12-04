@@ -33,8 +33,8 @@ on:
 env:
   AWS_REGION: us-west-1                  # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: cs4800_backend           # set this to your Amazon ECR repository name
-  ECS_SERVICE: CS4800Service11                # set this to your Amazon ECS service name
-  ECS_CLUSTER: CS4800_Cluster7                 # set this to your Amazon ECS cluster name
+  ECS_SERVICE: CS4800Service12                # set this to your Amazon ECS service name
+  ECS_CLUSTER: CS4800Cluster7                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: backend/TaskDefinition.json # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: cs4800_backend           # set this to the name of the container in the
