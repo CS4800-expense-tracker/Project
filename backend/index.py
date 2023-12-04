@@ -1,4 +1,5 @@
 import json
+import time
 from os import getenv, environ as env
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
@@ -1018,6 +1019,10 @@ def exchange_public_token():
         return jsonify({'public_token_exchange': 'complete'})
     except Exception as e:
         return f"Error: {e}"
+
+@app.route('/health', methods=['GET'])
+def health():
+    return f"I'm healthy!{time.time()}"
 
 
 if __name__ == "__main__":
