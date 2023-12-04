@@ -21,10 +21,53 @@
             "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
-            "ulimits": []
+            "ulimits": [],
+            "secrets": [
+                {
+                    "name": "APP_SECRET_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:APP_SECRET_KEY::"
+                },
+                {
+                    "name": "OPENAI_API_KEY",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:OPENAI_API_KEY::"
+                },
+                {
+                    "name": "AUTH0_CLIENT_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:AUTH0_CLIENT_ID::"
+                },
+                {
+                    "name": "AUTH0_CLIENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:AUTH0_CLIENT_SECRET::"
+                },
+                {
+                    "name": "AUTH0_DOMAIN",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:AUTH0_DOMAIN::"
+                },
+                {
+                    "name": "PLAID_CLIENT_ID",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:PLAID_CLIENT_ID::"
+                },
+                {
+                    "name": "PLAID_DEVELOPMENT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:PLAID_DEVELOPMENT_SECRET::"
+                },
+                {
+                    "name": "PLAID_SANDBOX_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:PLAID_SANDBOX_SECRET::"
+                },
+                {
+                    "name": "PLAID_ENV",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:PLAID_ENV::"
+                },
+                {
+                    "name": "SQLALCHEMY_DATABASE_URI",
+                    "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:SQLALCHEMY_DATABASE_URI::"
+                }
+            ]
         }
     ],
     "family": "CS4800",
+    "executionRoleArn": "arn:aws:iam::410130958579:role/CS4800ECSTaskExecutionRole",
     "networkMode": "awsvpc",
     "revision": 1,
     "volumes": [],
