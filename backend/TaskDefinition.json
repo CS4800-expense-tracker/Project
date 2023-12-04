@@ -4,9 +4,9 @@
         {
             "name": "cs4800_backend",
             "image": "410130958579.dkr.ecr.us-west-1.amazonaws.com/cs4800_backend",
-            "cpu": 1024,
-            "memory": 1024,
-            "memoryReservation": 1024,
+            "cpu": 512,
+            "memory": 512,
+            "memoryReservation": 512,
             "portMappings": [
                 {
                     "name": "cs4800_backend-80-tcp",
