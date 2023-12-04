@@ -68,7 +68,7 @@
     ],
     "family": "CS4800",
     "executionRoleArn": "arn:aws:iam::410130958579:role/CS4800ECSTaskExecutionRole",
-    "networkMode": "awsvpc",
+    "networkMode": "host",
     "revision": 1,
     "volumes": [],
     "status": "ACTIVE",

@@ -15,3 +15,5 @@ COPY . /code/
 
 #
 CMD ["gunicorn", "-b", "0.0.0.0:80", "index:app"]
+
+EXPOSE 80
