@@ -241,9 +241,15 @@ def get_categories(user_id):
         error_message = {"error": f"Error finding categories: {str(e)}"}
         return jsonify(error_message)
 
-# Create a GET route
-# To return a category
-# Based on just the category_id
+# GET route to return a category name based on the category_id
+@app.route('/category/<category_id>', methods=['GET'])
+def get_category(category_id):
+    try:
+        category = Category.query.get(category_id)
+        return jsonify({"name" : category.name})
+    except Exception as e:
+        error_message = {"error": f"Error finding category: {str(e)}"}
+        return jsonify(error_message)
 
 # Update category based on user_id and name. Updating the name and percent 
 # (note: frontend will need to return the previous name of the renamed category if the name was changed)

@@ -386,9 +386,15 @@ def get_categories(user_id):
         error_message = {"error": f"Error finding categories: {str(e)}"}
         return jsonify(error_message)
 
-# Create a GET route
-# To return a category
-# Based on just the category_id
+# GET route to return a category name based on the category_id
+@app.route('/category/<category_id>', methods=['GET'])
+def get_category(category_id):
+    try:
+        category = Category.query.get(category_id)
+        return jsonify({"name" : category.name})
+    except Exception as e:
+        error_message = {"error": f"Error finding category: {str(e)}"}
+        return jsonify(error_message)
 
 # Update category based on user_id and name. Updating the name and percent 
 # (note: frontend will need to return the previous name of the renamed category if the name was changed)
@@ -569,7 +575,6 @@ def delete_expense(user_id, expense_id):
         sub_expenses_to_delete = SubExpense.query.filter(
             and_(
                 SubExpense.expense_id == expense_id,
-                SubExpense.expense_id.has(user_id=user_id)  # Filtering by user_id
             )
         ).all()
         for sub_expense in sub_expenses_to_delete:
@@ -818,6 +823,78 @@ def get_expenses(user_id, page_num):
         error_message = {"error": f"Error accessing expenses: {str(e)}"}
         return jsonify(error_message)
 
+# Creating a route that returns each category name, category budget, and total amount spent in that category for a month based on the user_id
+@app.route('/categories_analysis/<user_id>', methods=['GET'])
+def get_categories_analysis(user_id):
+    try:
+        total_budget = TotalBudget.query.filter(
+            TotalBudget.user_id == user_id
+        ).order_by(TotalBudget.timestamp.desc()).first()
+        
+        if not total_budget:
+            return jsonify({"error": "Total Budget not found"})
+
+        # Get categories for the user
+        categories = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+            )
+        ).order_by(Category.timestamp.desc()).all()
+
+        # Assigning each category to budget amount based on percentage
+        category_analysis = dict()
+        category_budget = []
+        for category in categories:
+            category_analysis[category.name] = 0
+            # Calculate the custom budget for each category
+            budget = (category.percent * total_budget.total_budget) / 100
+            category_budget.append(budget)
+
+        # Getting current month expenses for the user
+        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == current_month
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        # Getting sub expenses and updating category spendings
+        for expense in expenses:
+            sub_expenses = SubExpense.query.filter(SubExpense.expense_id == expense.expense_id).all()
+
+            if not sub_expenses:
+                return jsonify({"error": "One or more expenses don't have a subexpense"})
+            
+            for sub_expense in sub_expenses:
+                # Find the category name based on subexpense's category_id
+                category_id = sub_expense.category_id
+                category = Category.query.filter(
+                    Category.category_id == category_id
+                ).order_by(Category.timestamp.desc()).first()
+
+                if category and category.name in category_analysis:
+                    print(category.name)
+                    print(category_analysis[category.name])
+                    category_analysis[category.name] += sub_expense.spent
+                    print(sub_expense.spent)
+                    print(category_analysis[category.name])
+                else:
+                    return jsonify({"error": "Category not found or doesn't exist"})
+        
+        json_list = [
+            {
+                "name": key,
+                "total_spent": round(value, 2),
+                "category_budget": round(category_budget[i], 2)
+            } 
+            for i, (key, value) in enumerate(category_analysis.items())
+        ]
+        return jsonify(json_list)
+    
+    except Exception as e:
+        error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
+        return jsonify(error_message)
 
 
 if __name__ == "__main__":
