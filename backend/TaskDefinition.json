@@ -21,13 +21,7 @@
             "environmentFiles": [],
             "mountPoints": [],
             "volumesFrom": [],
-            "ulimits": [],
-            "resourceRequirements": [
-                {
-                    "value": "1",
-                    "type": "GPU"
-                }
-            ]
+            "ulimits": []
         }
     ],
     "family": "CS4800",
