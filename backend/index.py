@@ -39,13 +39,14 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)    
     email = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
-    plaid_access_token = db.Column(db.String(255), nullable=True)
-    plaid_item_id = db.Column(db.String(255), nullable=True)
+    plaid_access_token = db.Column(db.Text, nullable=True)
+    plaid_item_id = db.Column(db.Text, nullable=True)
+    cursor = db.Column(db.String(255), nullable=True)
     password = db.Column(db.String(255), nullable=False)
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.user_id}, email={self.email}, name={self.name}, plaid_access_token={self.plaid_access_token}, plaid_item_id={self.plaid_item_id}, password={self.password}/>'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}, plaid_access_token={self.plaid_access_token}, plaid_item_id={self.plaid_item_id}, password={self.password} />'
 
 class TotalBudget(db.Model):
     budget_id = db.Column(db.Integer, primary_key=True)
