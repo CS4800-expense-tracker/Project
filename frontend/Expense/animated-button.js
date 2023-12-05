@@ -17,6 +17,7 @@ export default function AnimatedButton(props) {
   const buttonStyling = props.buttonStyle;
   const viewStyling = props.viewStyle;
   const onPress = props.onPress;
+  const textStyling = props.textStyle;
 
   const isHovered = useSharedValue(false);
 
@@ -54,7 +55,12 @@ export default function AnimatedButton(props) {
       style={[buttonStyling, viewStyling, animatedPressableStyle]}
     >
       <Animated.Text
-        style={[bodyTextStyle(), animatedTextStyle, { textAlign: "center" }]}
+        style={[
+          bodyTextStyle(),
+          animatedTextStyle,
+          textStyling,
+          { textAlign: "center" },
+        ]}
       >
         {textContent}
       </Animated.Text>
