@@ -158,13 +158,21 @@ def logout():
 def add_user():
     try:
         data = request.get_json()
-        if(data.get('email') == '' or data.get('email') is None or data.get('name') == '' or data.get('name') is None):
-            raise Exception("Email or Name not specified")
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
         email = data.get('email')
-        name = data.get('name')
+        name = data.get("name")
+        unhashed_password = data.get("password")
+        hashed_password = bcrypt.generate_password_hash(unhashed_password).decode('utf-8') 
 
-        new_user = User(email=email, name=name)
+        # Check to see if user already exists in server
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) > 0):
+            raise Exception("User already signed up")
+
+        ## adding to user category
+        new_user = User(email=email, name=name, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
