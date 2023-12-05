@@ -39,10 +39,13 @@ class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True)    
     email = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(255), nullable=False)
+    plaid_access_token = db.Column(db.String(255), nullable=True)
+    plaid_item_id = db.Column(db.String(255), nullable=True)
+    password = db.Column(db.String(255), nullable=False)
 
     ## This defines how the object is returned in string representation
     def __repr__(self):
-        return f'<test id={self.user_id}, email={self.email}, name={self.name}/>'
+        return f'<test id={self.user_id}, email={self.email}, name={self.name}, plaid_access_token={self.plaid_access_token}, plaid_item_id={self.plaid_item_id}, password={self.password}/>'
 
 class TotalBudget(db.Model):
     budget_id = db.Column(db.Integer, primary_key=True)
@@ -896,6 +899,28 @@ def get_categories_analysis(user_id):
         error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
         return jsonify(error_message)
 
+# Create a route that returns the total amount spent so far during a month
+@app.route('/overview/<user_id>', methods=['GET'])
+def get_total_spent_this_month(user_id):
+    try:
+        # Getting current month expenses for the user
+        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == current_month
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        total_spent = 0
+        for expense in expenses:
+            total_spent += expense.total_spent
+
+        return jsonify({"total_spent": total_spent})
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
 
 if __name__ == "__main__":
     app.run(host="localhost", port=3000)
