@@ -16,6 +16,7 @@ export default function Account() {
   const [newCategoryBudget, setNewCategoryBudget] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = React.useState("");
+  const [deleteAccount, setDeleteAccount] = React.useState("");
   const linkedBank = false;
 
   const { height, width } = useWindowDimensions();
@@ -138,6 +139,12 @@ export default function Account() {
     setEditedCategoryBudget("");
   };
 
+  const onDeleteAccountPress = () => {
+    if (deleteAccount.toLowerCase() === "delete my account") {
+      setDeleteAccount("");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Sidebar page="account" />
@@ -242,9 +249,8 @@ export default function Account() {
         <BodyText
           style={[
             styles.bottomMarginXSmall,
-            ,
             styles.mobileCenter,
-            { fontSize: 14 },
+            styles.subText,
           ]}
         >
           This is a percentage of your monthly budget.
@@ -317,9 +323,8 @@ export default function Account() {
         <BodyText
           style={[
             styles.bottomMarginXSmall,
-            ,
             styles.mobileCenter,
-            { fontSize: 14 },
+            styles.subText,
           ]}
         >
           This is a percentage of your monthly budget.
@@ -355,7 +360,7 @@ export default function Account() {
         </BodyText>
         <Link
           to={{ screen: "BankLink" }}
-          style={{ width: linkedBank ? 216 : 200 }}
+          style={[styles.bottomMarginLarge, { width: linkedBank ? 216 : 200 }]}
         >
           <AnimatedButton
             bgColor={linkedBank ? "#ddd" : "#BCEE51"}
@@ -367,6 +372,50 @@ export default function Account() {
             viewStyle={styles.bankLinkButtonView}
           />
         </Link>
+        <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+          Delete your account
+        </Heading2>
+        <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+          Delete your account, including all data associated with it. This is
+          NOT reversible.
+        </BodyText>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
+          Confirm deletion
+        </Heading2>
+        <TextInput
+          keyboardType="default"
+          onChangeText={(text) => setDeleteAccount(text)}
+          value={deleteAccount}
+          placeholder="Delete my account"
+          placeholderTextColor="#888"
+          maxLength={17}
+          style={[bodyTextStyle(), styles.input]}
+        />
+        <BodyText
+          style={[
+            styles.bottomMarginXSmall,
+            styles.mobileCenter,
+            styles.subText,
+          ]}
+        >
+          Type "Delete my account" to confirm account deletion.
+        </BodyText>
+        <AnimatedButton
+          bgColor={"#ddd"}
+          hoverBgColor={"#803333"}
+          textColor={"#803333"}
+          hoverTextColor={"#fff"}
+          text={"Delete your account"}
+          buttonStyle={{ width: "max-content" }}
+          viewStyle={styles.bankLinkButtonView}
+          onPress={onDeleteAccountPress}
+        />
       </SectionView>
     </View>
   );
@@ -441,5 +490,9 @@ const makeStyles = (width) =>
     },
     mobileCenter: {
       textAlign: width >= 1200 ? "auto" : "center",
+    },
+    subText: {
+      fontSize: width >= 600 ? 14 : 12,
+      maxWidth: 384,
     },
   });
