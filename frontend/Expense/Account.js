@@ -1,5 +1,7 @@
 import React from "react";
 import { StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
+import { usePlaidLink } from "react-plaid-link";
+import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
 import { Link } from "@react-navigation/native";
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
@@ -18,6 +20,8 @@ export default function Account() {
   const [editedCategoryBudget, setEditedCategoryBudget] = React.useState("");
   const [deleteAccount, setDeleteAccount] = React.useState("");
   const linkedBank = false;
+  // assuming we pull this in from a context
+  const user_id = 1;
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -143,6 +147,63 @@ export default function Account() {
     if (deleteAccount.toLowerCase() === "delete my account") {
       setDeleteAccount("");
     }
+  };
+  const BankButton = () => {
+    const [linkToken, setLinkToken] = useState(null);
+    const generateToken = async () => {
+      const response = await fetch("http://127.0.0.1:5000/create_link_token", {
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+        body: JSON.stringify({ user_id: user_id }),
+      });
+      const data = await response.json();
+      if (data) {
+        setLinkToken(data.link_token);
+      }
+    };
+
+    useEffect(() => {
+      generateToken();
+    }, []);
+    useEffect(() => {
+      console.log(linkToken);
+    }, [linkToken]);
+    return linkToken != null ? <PlaidLink linkToken={linkToken} /> : <></>;
+  };
+
+  const PlaidLink = (props) => {
+    const onSuccess = React.useCallback((public_token, metadata) => {
+      // send public_token to server
+      const response = fetch("http://127.0.0.1:5000/set_access_token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ public_token: public_token, user_id: user_id }),
+      });
+      // Handle response ...
+      // We need to store the access token in the react context for this application
+      // That way we don't have to keep pinging the database for that stuff
+      // Alternatively could use localStorage, but that has more security risks (I think)
+    }, []);
+    const config = {
+      token: props.linkToken,
+      onSuccess,
+    };
+    const { open, ready } = usePlaidLink(config);
+    return (
+      <AnimatedButton
+        bgColor={linkedBank ? "#ddd" : "#BCEE51"}
+        hoverBgColor={linkedBank ? "#803333" : "#558033"}
+        textColor={linkedBank ? "#803333" : "#384718"}
+        hoverTextColor={"#fff"}
+        text={linkedBank ? "Unlink your account" : "Link your account"}
+        buttonStyle={{ width: linkedBank ? 216 : 200 }}
+        viewStyle={styles.bankLinkButtonView}
+        onPress={() => open()}
+        disabled={!ready}
+      />
+    );
   };
 
   return (
@@ -358,20 +419,8 @@ export default function Account() {
           You {linkedBank ? "already" : "do not currently"} have a bank account
           connected with PennyWise
         </BodyText>
-        <Link
-          to={{ screen: "BankLink" }}
-          style={[styles.bottomMarginLarge, { width: linkedBank ? 216 : 200 }]}
-        >
-          <AnimatedButton
-            bgColor={linkedBank ? "#ddd" : "#BCEE51"}
-            hoverBgColor={linkedBank ? "#803333" : "#558033"}
-            textColor={linkedBank ? "#803333" : "#384718"}
-            hoverTextColor={"#fff"}
-            text={linkedBank ? "Unlink your account" : "Link your account"}
-            buttonStyle={{ width: linkedBank ? 216 : 200 }}
-            viewStyle={styles.bankLinkButtonView}
-          />
-        </Link>
+        <BankButton />
+        <View style={styles.bottomMarginLarge}></View>
         <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
           Delete your account
         </Heading2>

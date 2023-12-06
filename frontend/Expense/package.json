@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "export": "expo export:web && cp ./public/** web-build"
   },
   "dependencies": {
     "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
@@ -30,7 +31,9 @@
     "react-native-safe-area-context": "4.6.3",
     "react-native-screens": "~3.22.0",
     "react-native-svg": "13.9.0",
-    "react-native-web": "~0.19.6"
+    "react-native-toast-notifications": "^3.4.0",
+    "react-native-web": "~0.19.6",
+    "react-plaid-link": "^3.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
