@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { usePlaidLink } from "react-plaid-link";
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
@@ -13,12 +13,12 @@ import { SelectList } from "react-native-dropdown-select-list";
 import { getH2XSmallMobileSize } from "./font-sizes";
 
 export default function Account() {
-  const [budget, setBudget] = React.useState("");
-  const [newCategoryName, setNewCategoryName] = React.useState("");
-  const [newCategoryBudget, setNewCategoryBudget] = React.useState("");
-  const [selectedCategory, setSelectedCategory] = React.useState("");
-  const [editedCategoryBudget, setEditedCategoryBudget] = React.useState("");
-  const [deleteAccount, setDeleteAccount] = React.useState("");
+  const [budget, setBudget] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryBudget, setNewCategoryBudget] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
+  const [deleteAccount, setDeleteAccount] = useState("");
   const linkedBank = false;
   // assuming we pull this in from a context
   const user_id = 1;

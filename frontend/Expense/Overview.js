@@ -19,30 +19,25 @@ import {
   getH2SmallMobileSize,
   getH2XSmallMobileSize,
 } from "./font-sizes";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import * as Progress from "react-native-progress";
 import { AppContext } from "./AppContext";
 
-export default function Overview({navigation}) {
+export default function Overview({ navigation }) {
   const squareIcon = require("./img/square.svg");
   // TODO: populate this shit
   // Check for user id and link bank
   // If no link, then have notification over the thingy
   // If no user id, send to sign up or log in
 
-  const { state: appContext, dispatch: appDispatch } = useContext(
-    AppContext
-  );
+  const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
 
-  const user_id = appContext.userID
-  if(!user_id) {
-    navigation.navigate("Signup")
+  const user_id = appContext.userID;
+  if (!user_id) {
+    navigation.navigate("Signup");
   }
 
-  useEffect(() => {
-
-  }, [])
-
+  useEffect(() => {}, []);
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);

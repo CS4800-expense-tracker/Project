@@ -36,7 +36,7 @@ export default function Landing() {
           displayMenu && width < 600 ? "" : { display: "none" },
         ]}
       >
-        <Link to={{ screen: "Overview" }}>
+        <Link to={{ screen: "Login" }}>
           <Pressable>
             <BodyText
               style={[styles.text, styles.mobileLogIn, { fontSize: 20 }]}
@@ -45,7 +45,7 @@ export default function Landing() {
             </BodyText>
           </Pressable>
         </Link>
-        <Link to={{ screen: "Setup" }}>
+        <Link to={{ screen: "Signup" }}>
           <AnimatedButton
             bgColor={"#384718"}
             hoverBgColor={"#BCEE51"}
