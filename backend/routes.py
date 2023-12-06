@@ -2,6 +2,7 @@ from index import app, db, User, Category, TotalBudget, Expense, SubExpense, Fla
 from flask import Flask, request, jsonify
 from sqlalchemy import and_, extract
 import datetime
+from flask_bcrypt import Bcrypt
 
 # CRUD Methods for User
 # Add new user
@@ -9,13 +10,21 @@ import datetime
 def add_user():
     try:
         data = request.get_json()
-        if(data.get('email') == '' or data.get('email') is None or data.get('name') == '' or data.get('name') is None):
-            raise Exception("Email or Name not specified")
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
         email = data.get('email')
-        name = data.get('name')
+        name = data.get("name")
+        unhashed_password = data.get("password")
+        hashed_password = bcrypt.generate_password_hash(unhashed_password).decode('utf-8') 
 
-        new_user = User(email=email, name=name)
+        # Check to see if user already exists in server
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) > 0):
+            raise Exception("User already signed up")
+
+        ## adding to user category
+        new_user = User(email=email, name=name, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
 
@@ -361,31 +370,31 @@ def add_expense(user_id):
         error_message = {"error": f"Error adding expense: {str(e)}"}
         return jsonify(error_message)
 
-# Read all expenses based on the latest month
-@app.route('/expense/<user_id>', methods=['GET'])
-def get_expenses(user_id):
-    try:
-        current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
-        expenses = Expense.query.filter(
-            and_(
-                Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
-            )
-        ).order_by(Expense.timestamp.desc()).all()
+# # Read all expenses based on the latest month
+# @app.route('/expense/<user_id>', methods=['GET'])
+# def get_expenses(user_id):
+#     try:
+#         current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
+#         expenses = Expense.query.filter(
+#             and_(
+#                 Expense.user_id == user_id,
+#                 extract('month', Expense.timestamp) == current_month
+#             )
+#         ).order_by(Expense.timestamp.desc()).all()
 
-        expense_info = []
-        for expense in expenses:
-            expense_info.append({
-                "expense_id": expense.expense_id,
-                "store_name": expense.store_name,
-                "total_spent": expense.total_spent,
-                "timestamp": expense.timestamp
-            })
+#         expense_info = []
+#         for expense in expenses:
+#             expense_info.append({
+#                 "expense_id": expense.expense_id,
+#                 "store_name": expense.store_name,
+#                 "total_spent": expense.total_spent,
+#                 "timestamp": expense.timestamp
+#             })
 
-        return jsonify(expense_info)
-    except Exception as e:
-        error_message = {"error": f"Error finding expense: {str(e)}"}
-        return jsonify(error_message)
+#         return jsonify(expense_info)
+#     except Exception as e:
+#         error_message = {"error": f"Error finding expense: {str(e)}"}
+#         return jsonify(error_message)
 
 # Update category based on user_id and expense_id. Updating the store_name and total_spent
 @app.route('/expense/<user_id>/<expense_id>', methods=['PUT'])
@@ -430,7 +439,6 @@ def delete_expense(user_id, expense_id):
         sub_expenses_to_delete = SubExpense.query.filter(
             and_(
                 SubExpense.expense_id == expense_id,
-                SubExpense.expense_id.has(user_id=user_id)  # Filtering by user_id
             )
         ).all()
         for sub_expense in sub_expenses_to_delete:
@@ -513,7 +521,7 @@ def get_sub_expense(expense_id):
 
         sub_expense_info = []
         for sub_expense in sub_expenses:
-            # Find the category name based on user_id and current sub_expense category_id
+            # Find the category name based on category_id and current sub_expense
             category_id = sub_expense.category_id
             category = Category.query.filter(
                 Category.category_id == category_id
@@ -591,4 +599,186 @@ def delete_sub_expense(expense_id, sub_expense_id):
             return jsonify(error_message)
     except Exception as e:
         error_message = {"error": f"Error deleting sub expense: {str(e)}"}
+        return jsonify(error_message)
+
+# Creating a route that returns the last 5 expenses of the user
+@app.route('/last_five_expenses/<user_id>', methods=['GET'])
+def last_five_expenses(user_id):
+    try:
+        user = User.query.filter(User.user_id == user_id).first()
+        if not user:
+            raise Exception("User not found")
+        
+        expenses = Expense.query.filter(
+                Expense.user_id == user_id
+        ).order_by(Expense.timestamp.desc()).limit(5).all()
+
+        expense_info = []
+        for expense in expenses:
+            expense_info.append({
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp
+            })
+        
+        if expense_info:
+            return jsonify(expense_info)
+        else:
+            error_message = {"error": f"User does not have any expenses yet"}
+            return jsonify(error_message)
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Creating a route that returns the newest 10 expenses and sub-expenses based on the page number
+# so if the user is on page 1, return the news 10 expenses and their sub-expenses
+@app.route('/expenses/<user_id>/<page_num>', methods=['GET'])
+def get_expenses(user_id, page_num):
+    try:
+        start = (int(page_num)-1)*10
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id
+            )
+        ).order_by(Expense.timestamp.desc()).offset(start).limit(10).all()
+
+        expense_info = []
+        for expense in expenses:
+            expense_data = {
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp,
+                "sub_expenses": []
+            }
+
+            sub_expenses = SubExpense.query.filter(
+                and_(
+                    SubExpense.expense_id == expense.expense_id
+                )
+            ).all()
+            if sub_expenses:
+                for sub_expense in sub_expenses:
+                    # Find the category name based on category_id and current sub_expense
+                    category_id = sub_expense.category_id
+                    category = Category.query.filter(
+                        Category.category_id == category_id
+                    ).order_by(Category.timestamp.desc()).first()
+
+                    sub_expense_data = {
+                        "sub_expense_id": sub_expense.sub_expense_id,
+                        "spent": sub_expense.spent,
+                        "category_name": category.name if category else None
+                    }
+                    expense_data["sub_expenses"].append(sub_expense_data)
+            expense_info.append(expense_data)
+        
+        if expense_info:
+            return jsonify(expense_info)
+        else:
+            error_message = {"error": f"Expenses not found"}
+            return jsonify(error_message)
+
+        # return jsonify(expense_info)
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Creating a route that returns each category name, category budget, and total amount spent in that category for a month based on the user_id
+@app.route('/categories_analysis/<user_id>', methods=['GET'])
+def get_categories_analysis(user_id):
+    try:
+        total_budget = TotalBudget.query.filter(
+            TotalBudget.user_id == user_id
+        ).order_by(TotalBudget.timestamp.desc()).first()
+        
+        if not total_budget:
+            return jsonify({"error": "Total Budget not found"})
+
+        # Get categories for the user
+        categories = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+            )
+        ).order_by(Category.timestamp.desc()).all()
+
+        # Assigning each category to budget amount based on percentage
+        category_analysis = dict()
+        category_budget = []
+        for category in categories:
+            category_analysis[category.name] = 0
+            # Calculate the custom budget for each category
+            budget = (category.percent * total_budget.total_budget) / 100
+            category_budget.append(budget)
+
+        # Getting current month expenses for the user
+        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == current_month
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        # Getting sub expenses and updating category spendings
+        for expense in expenses:
+            sub_expenses = SubExpense.query.filter(SubExpense.expense_id == expense.expense_id).all()
+
+            if not sub_expenses:
+                return jsonify({"error": "One or more expenses don't have a subexpense"})
+            
+            for sub_expense in sub_expenses:
+                # Find the category name based on subexpense's category_id
+                category_id = sub_expense.category_id
+                category = Category.query.filter(
+                    Category.category_id == category_id
+                ).order_by(Category.timestamp.desc()).first()
+
+                if category and category.name in category_analysis:
+                    print(category.name)
+                    print(category_analysis[category.name])
+                    category_analysis[category.name] += sub_expense.spent
+                    print(sub_expense.spent)
+                    print(category_analysis[category.name])
+                else:
+                    return jsonify({"error": "Category not found or doesn't exist"})
+        
+        json_list = [
+            {
+                "name": key,
+                "total_spent": round(value, 2),
+                "category_budget": round(category_budget[i], 2)
+            } 
+            for i, (key, value) in enumerate(category_analysis.items())
+        ]
+        return jsonify(json_list)
+    
+    except Exception as e:
+        error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Create a route that returns the total amount spent so far during a month
+@app.route('/overview/<user_id>', methods=['GET'])
+def get_total_spent_this_month(user_id):
+    try:
+        # Getting current month expenses for the user
+        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == current_month
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        total_spent = 0
+        for expense in expenses:
+            total_spent += expense.total_spent
+
+        return jsonify({"total_spent": total_spent})
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
         return jsonify(error_message)
