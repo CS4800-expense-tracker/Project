@@ -1,4 +1,10 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import PieChart from "react-native-pie-chart";
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
@@ -6,11 +12,21 @@ import BodyText from "./body-text";
 import RecentExpense from "./recent-expense";
 import Heading1 from "./heading1";
 import Heading2 from "./heading2";
+import {
+  getBodyTextSize,
+  getH1MobileSize,
+  getH2MobileSize,
+  getH2SmallMobileSize,
+  getH2XSmallMobileSize,
+} from "./font-sizes";
 import { useState } from "react";
 import * as Progress from "react-native-progress";
 
 export default function Overview() {
   const squareIcon = require("./img/square.svg");
+
+  const { height, width } = useWindowDimensions();
+  const styles = makeStyles(width);
 
   const name = "John";
   const monthlyBudget = 1000;
@@ -91,7 +107,7 @@ export default function Overview() {
     <View style={styles.container}>
       <Sidebar page="overview" />
       <SectionView>
-        <Heading1 style={[styles.textColor, { marginBottom: 48 }]}>
+        <Heading1 style={[styles.textColor, styles.h1, { marginBottom: 48 }]}>
           Welcome, {name}
         </Heading1>
         <Heading2 style={[styles.textColor, styles.h2]}>
@@ -99,23 +115,23 @@ export default function Overview() {
         </Heading2>
         <View style={[styles.subsectionContainer]}>
           <Heading2 style={[styles.textColor, styles.h2Small]}>Budget</Heading2>
-          <View style={[styles.spaceBetween, { alignItems: "center" }]}>
-            <View style={[styles.flex]}>
+          <View style={[styles.budgetView]}>
+            <View style={[styles.flex, { alignItems: "center" }]}>
               <BodyText
                 style={[getBudgetTextStyle(), styles.availableValueText]}
               >
                 ${monthlyBudget}
               </BodyText>
-              <View style={styles.rowFlex}>
-                <BodyText style={getBudgetTextStyle()}>budget </BodyText>
-                <BodyText style={getBudgetTextStyle()}>
+              <View style={[styles.rowFlex]}>
+                <BodyText style={[getBudgetTextStyle()]}>budget </BodyText>
+                <BodyText style={[getBudgetTextStyle()]}>
                   {available >= 0 ? "this month" : "exceeded"}
                 </BodyText>
               </View>
             </View>
             <View style={styles.chart}>
               <PieChart
-                widthAndHeight={128}
+                widthAndHeight={width >= 425 ? 128 : 96}
                 series={pieChartSeries}
                 sliceColor={sliceColors}
                 style={styles.pieChart}
@@ -129,7 +145,7 @@ export default function Overview() {
                       { tintColor: available >= 0 ? "#558033" : "#803333" },
                     ]}
                   />
-                  <BodyText style={styles.textColor}>
+                  <BodyText style={[styles.textColor]}>
                     {available >= 0 ? "Available" : "Deficit"}
                   </BodyText>
                 </View>
@@ -138,7 +154,7 @@ export default function Overview() {
                     source={squareIcon}
                     style={[styles.square, { tintColor: "#BCEE51" }]}
                   />
-                  <BodyText style={styles.textColor}>
+                  <BodyText style={[styles.textColor]}>
                     {available >= 0 ? "Spent" : "Budget"}
                   </BodyText>
                 </View>
@@ -215,71 +231,77 @@ export default function Overview() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    display: "flex",
-    flexDirection: "row",
-    alignContent: "space-between",
-    height: "100%",
-  },
-  textColor: {
-    color: "#333",
-  },
-  h2: {
-    fontSize: 32,
-    marginBottom: 64,
-  },
-  h2Small: {
-    fontSize: 28,
-    marginBottom: 32,
-  },
-  h2XSmall: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  spaceBetween: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  subsectionContainer: {
-    width: "100%",
-    backgroundColor: "#ddd",
-    borderRadius: 32,
-    padding: 32,
-    marginBottom: 64,
-  },
-  flex: {
-    display: "flex",
-  },
-  rowFlex: {
-    display: "flex",
-    flexDirection: "row",
-  },
-  underBudgetText: {
-    color: "#558033",
-  },
-  overBudgetText: {
-    color: "#803333",
-  },
-  availableValueText: {
-    fontSize: 56,
-    lineHeight: "1",
-  },
-  chart: {
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  pieChart: {
-    marginRight: 16,
-  },
-  square: {
-    width: 24,
-    height: 24,
-    marginRight: 8,
-  },
-  chartTextValue: {
-    fontFamily: "Rubik_600SemiBold",
-  },
-});
+const makeStyles = (width) =>
+  StyleSheet.create({
+    container: {
+      display: "flex",
+      flexDirection: width >= 1200 ? "row" : "column",
+      alignContent: width >= 1200 ? "space-between" : "",
+      height: "100%",
+    },
+    textColor: {
+      color: "#333",
+    },
+    h1: {
+      textAlign: width >= 750 ? "left" : "center",
+    },
+    h2: {
+      textAlign: width >= 750 ? "left" : "center",
+      marginBottom: 64,
+    },
+    h2Small: {
+      fontSize: getH2SmallMobileSize(width),
+      marginBottom: 32,
+    },
+    h2XSmall: {
+      fontSize: getH2XSmallMobileSize(width),
+      marginBottom: 8,
+    },
+    budgetView: {
+      display: "flex",
+      flexDirection: width >= 750 ? "row" : "column",
+      justifyContent: width >= 750 ? "space-between" : "center",
+      alignItems: "center",
+      gap: width >= 750 ? 0 : 32,
+    },
+    subsectionContainer: {
+      width: "100%",
+      backgroundColor: "#ddd",
+      borderRadius: 32,
+      padding: 32,
+      marginBottom: 64,
+    },
+    flex: {
+      display: "flex",
+    },
+    rowFlex: {
+      display: "flex",
+      flexDirection: "row",
+    },
+    underBudgetText: {
+      color: "#558033",
+    },
+    overBudgetText: {
+      color: "#803333",
+    },
+    availableValueText: {
+      fontSize: getH1MobileSize(width),
+      lineHeight: "1",
+    },
+    chart: {
+      display: "flex",
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    pieChart: {
+      marginRight: 16,
+    },
+    square: {
+      width: 24,
+      height: 24,
+      marginRight: 8,
+    },
+    chartTextValue: {
+      fontFamily: "Rubik_600SemiBold",
+    },
+  });

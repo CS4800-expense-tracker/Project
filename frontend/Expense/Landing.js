@@ -10,18 +10,52 @@ import { Link } from "@react-navigation/native";
 import AnimatedButton from "./animated-button";
 import Heading1 from "./heading1";
 import BodyText from "./body-text";
+import { getH1MobileSize, getH1SmallMobileSize } from "./font-sizes";
+import React from "react";
 
 export default function Landing() {
   const heroImage = require("./img/hero_image.png");
   const tempImage = require("./img/placeholder.png");
   const logoLb = require("./img/PennyWise_Logo_Lb.png");
   const logoDb = require("./img/PennyWise_Logo_Db.png");
+  const menu = require("./img/menu.svg");
+  const close = require("./img/close.svg");
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
+  const useSmallText = width >= 950 ? false : true;
+
+  const [displayMenu, setDisplayMenu] = React.useState(false);
 
   return (
     <View style={styles.container}>
+      <View
+        style={[
+          styles.menu,
+          displayMenu && width < 600 ? "" : { display: "none" },
+        ]}
+      >
+        <Link to={{ screen: "Overview" }}>
+          <Pressable>
+            <BodyText
+              style={[styles.text, styles.mobileLogIn, { fontSize: 20 }]}
+            >
+              Log in
+            </BodyText>
+          </Pressable>
+        </Link>
+        <Link to={{ screen: "Setup" }}>
+          <AnimatedButton
+            bgColor={"#384718"}
+            hoverBgColor={"#BCEE51"}
+            textColor={"#fff"}
+            hoverTextColor={"#384718"}
+            text={"Sign up"}
+            viewStyle={[styles.headerButton]}
+            textStyle={[styles.text, { fontSize: 20 }]}
+          />
+        </Link>
+      </View>
       <View
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
@@ -33,17 +67,55 @@ export default function Landing() {
             textColor={"#fff"}
             hoverTextColor={"#384718"}
             text={"Log in"}
-            viewStyle={styles.headerButton}
+            viewStyle={[
+              styles.headerButton,
+              width < 600 ? { display: "none" } : "",
+            ]}
+            textStyle={useSmallText ? styles.bodyTextMobile : ""}
           />
         </Link>
+        <Pressable
+          onPress={() => setDisplayMenu(!displayMenu)}
+          style={width >= 600 ? { display: "none" } : ""}
+        >
+          <Image
+            source={displayMenu ? close : menu}
+            style={styles.menuButton}
+          />
+        </Pressable>
       </View>
-      <View style={[styles.sectionWidth, styles.hero, styles.sectionMargin]}>
-        <View style={styles.rowSpaceBetween}>
-          <View style={styles.heroLeft}>
-            <Heading1 style={[styles.h1, { color: "#384718" }]}>
+      <View
+        style={[
+          styles.sectionWidth,
+          styles.hero,
+          styles.sectionMargin,
+          displayMenu ? { display: "none" } : "",
+        ]}
+      >
+        <View
+          style={
+            width >= 1300
+              ? styles.rowSpaceBetween
+              : [styles.flexJustify, { gap: 64 }]
+          }
+        >
+          <View style={width >= 1300 ? styles.heroLeft : styles.heroTop}>
+            <Heading1
+              style={[
+                styles.h1,
+                useSmallText ? styles.h1Mobile : "",
+                { color: "#384718" },
+              ]}
+            >
               Take control of your finances
             </Heading1>
-            <BodyText style={[styles.text, { marginBottom: 16 }]}>
+            <BodyText
+              style={[
+                styles.text,
+                useSmallText ? styles.bodyTextMobile : "",
+                { marginBottom: 16 },
+              ]}
+            >
               PennyWise is on a mission to make expense tracking simple and
               intelligent.
             </BodyText>
@@ -56,22 +128,53 @@ export default function Landing() {
                   hoverTextColor={"#F2FCDC"}
                   text={"Get started"}
                   viewStyle={styles.heroButton}
+                  textStyle={
+                    useSmallText ? styles.bodyTextMobile : { fontSize: 18 }
+                  }
                 />
               </Link>
             </View>
           </View>
-          <Image source={heroImage} style={[styles.heroImage]} />
+          <Image
+            source={heroImage}
+            style={width >= 1300 ? styles.heroImage : styles.heroImageSmall}
+          />
         </View>
       </View>
-      <View style={[styles.flexJustify, styles.sectionMargin]}>
-        <Heading1 style={[styles.text, styles.h1Small]}>
+      <View
+        style={[
+          styles.flexJustify,
+          styles.sectionMargin,
+          styles.featureView,
+          displayMenu ? { display: "none" } : "",
+        ]}
+      >
+        <Heading1
+          style={[
+            styles.text,
+            styles.h1Small,
+            useSmallText ? styles.h1SmallMobile : "",
+          ]}
+        >
           It's{" "}
-          <Heading1 style={[styles.text, styles.h1Small, styles.underline]}>
+          <Heading1
+            style={[
+              styles.text,
+              styles.h1Small,
+              useSmallText ? styles.h1SmallMobile : "",
+              styles.underline,
+            ]}
+          >
             simple
           </Heading1>
         </Heading1>
         <BodyText
-          style={[styles.text, styles.featureText, { marginBottom: 32 }]}
+          style={[
+            styles.text,
+            styles.featureText,
+            useSmallText ? styles.bodyTextMobile : "",
+            { marginBottom: 32 },
+          ]}
         >
           Our elegant, intuitive interface makes tracking all your expenses a
           breeze.
@@ -80,15 +183,40 @@ export default function Landing() {
           <Image source={tempImage} style={styles.featureImages} />
         </View>
       </View>
-      <View style={[styles.flexJustify, styles.sectionMargin]}>
-        <Heading1 style={[styles.text, styles.h1Small]}>
+      <View
+        style={[
+          styles.flexJustify,
+          styles.sectionMargin,
+          styles.featureView,
+          displayMenu ? { display: "none" } : "",
+        ]}
+      >
+        <Heading1
+          style={[
+            styles.text,
+            styles.h1Small,
+            useSmallText ? styles.h1SmallMobile : "",
+          ]}
+        >
           It's{" "}
-          <Heading1 style={[styles.text, styles.h1Small, styles.underline]}>
+          <Heading1
+            style={[
+              styles.text,
+              styles.h1Small,
+              useSmallText ? styles.h1SmallMobile : "",
+              styles.underline,
+            ]}
+          >
             intelligent
           </Heading1>
         </Heading1>
         <BodyText
-          style={[styles.text, styles.featureText, { marginBottom: 32 }]}
+          style={[
+            styles.text,
+            styles.featureText,
+            useSmallText ? styles.bodyTextMobile : "",
+            { marginBottom: 32 },
+          ]}
         >
           Get real-time insights into your spending habits, helping you identify
           trends, and make informed decisions about your financial future.
@@ -97,15 +225,40 @@ export default function Landing() {
           <Image source={tempImage} style={styles.featureImages} />
         </View>
       </View>
-      <View style={[styles.flexJustify, styles.sectionMargin]}>
-        <Heading1 style={[styles.text, styles.h1Small]}>
+      <View
+        style={[
+          styles.flexJustify,
+          styles.sectionMargin,
+          styles.featureView,
+          displayMenu ? { display: "none" } : "",
+        ]}
+      >
+        <Heading1
+          style={[
+            styles.text,
+            styles.h1Small,
+            useSmallText ? styles.h1SmallMobile : "",
+          ]}
+        >
           It's{" "}
-          <Heading1 style={[styles.text, styles.h1Small, styles.underline]}>
+          <Heading1
+            style={[
+              styles.text,
+              styles.h1Small,
+              useSmallText ? styles.h1SmallMobile : "",
+              styles.underline,
+            ]}
+          >
             free
           </Heading1>
         </Heading1>
         <BodyText
-          style={[styles.text, styles.featureText, { marginBottom: 32 }]}
+          style={[
+            styles.text,
+            styles.featureText,
+            useSmallText ? styles.bodyTextMobile : "",
+            { marginBottom: 32 },
+          ]}
         >
           All of these great features at no cost to you.
         </BodyText>
@@ -113,11 +266,14 @@ export default function Landing() {
           <Image source={tempImage} style={[styles.featureImages]} />
         </View>
       </View>
-      <View style={[styles.marginBottom]}>
+      <View
+        style={[styles.marginBottom, displayMenu ? { display: "none" } : ""]}
+      >
         <Heading1
           style={[
             styles.h1,
             styles.text,
+            useSmallText ? [styles.h1Mobile, { paddingHorizontal: 16 }] : "",
             { marginBottom: 32, textAlign: "center" },
           ]}
         >
@@ -138,14 +294,22 @@ export default function Landing() {
             text={"Create your free account"}
             buttonStyle={[styles.featureButton]}
             viewStyle={styles.featureButtonView}
+            textStyle={useSmallText ? styles.bodyTextMobile : { fontSize: 18 }}
           />
         </Link>
       </View>
-      <View style={styles.footerContainer}>
+      <View
+        style={[styles.footerContainer, displayMenu ? { display: "none" } : ""]}
+      >
         <View
-          style={[styles.sectionWidth, styles.rowSpaceBetween, styles.footer]}
+          style={[
+            styles.sectionWidth,
+            styles.rowSpaceBetween,
+            styles.footer,
+            width < 600 ? { justifyContent: "center" } : "",
+          ]}
         >
-          <Image source={logoDb} style={styles.logo} />
+          <Image source={logoDb} style={[styles.logo]} />
           <Link to={{ screen: "Overview" }}>
             <AnimatedButton
               bgColor={"#F2FCDC"}
@@ -153,7 +317,13 @@ export default function Landing() {
               textColor={"#384718"}
               hoverTextColor={"#384718"}
               text={"Log in"}
-              viewStyle={styles.headerButton}
+              viewStyle={[
+                styles.headerButton,
+                width < 600 ? { display: "none" } : "",
+              ]}
+              textStyle={
+                useSmallText ? styles.bodyTextMobile : { fontSize: 18 }
+              }
             />
           </Link>
         </View>
@@ -167,6 +337,25 @@ export default function Landing() {
   );
 }
 
+const getSectionWidth = (windowWidth) => {
+  if (windowWidth >= 2000) return "75%";
+  else if (windowWidth >= 1600) return "80%";
+  else if (windowWidth >= 1200) return "85%";
+  return "90%";
+};
+
+const getHeroImageWidth = (windowWidth) => {
+  if (windowWidth >= 900) return "60%";
+  else if (windowWidth >= 750) return "80%";
+  else return "100%";
+};
+
+const getFeatureImageWidth = (windowWidth) => {
+  if (windowWidth >= 1200) return "65vw";
+  else if (windowWidth >= 900) return "75vw";
+  else return "80vw";
+};
+
 const makeStyles = (width) =>
   StyleSheet.create({
     container: {
@@ -177,18 +366,30 @@ const makeStyles = (width) =>
     text: {
       color: "#384718",
     },
+    bodyTextMobile: {
+      fontSize: width >= 600 ? 16 : 14,
+      textAlign: "center",
+    },
+    h1Mobile: {
+      fontSize: getH1MobileSize(width),
+      textAlign: "center",
+    },
+    h1SmallMobile: {
+      fontSize: getH1SmallMobileSize(width),
+    },
     sectionWidth: {
-      width: width < 1280 ? "90%" : "85%",
+      width: getSectionWidth(width),
     },
     hero: {
       backgroundColor: "#BCEE51",
       borderRadius: 32,
-      paddingHorizontal: 64,
-      paddingVertical: 128,
+      paddingHorizontal: width >= 1300 ? 64 : 48,
+      paddingVertical: width >= 1300 ? 128 : 64,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 16 },
       shadowOpacity: 0.15,
       shadowRadius: 32,
+      maxWidth: 1300,
     },
     rowSpaceBetween: {
       display: "flex",
@@ -204,13 +405,15 @@ const makeStyles = (width) =>
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
+    },
+    featureView: {
       width: "65%",
     },
     sectionMargin: {
       marginBottom: 128,
     },
     logo: {
-      height: "100%",
+      height: width >= 600 ? "100%" : 36,
       width: undefined,
       aspectRatio: "37 / 7",
       resizeMode: "contain",
@@ -218,11 +421,34 @@ const makeStyles = (width) =>
     header: {
       paddingTop: 40,
       paddingBottom: 60,
+      zIndex: 4,
     },
     headerButton: {
       borderRadius: 32,
-      paddingHorizontal: 16,
-      paddingVertical: 8,
+      paddingHorizontal: width >= 600 ? 16 : 12,
+      paddingVertical: width >= 600 ? 8 : 4,
+    },
+    menuButton: {
+      width: 36,
+      height: 36,
+      tintColor: "#384718",
+    },
+    menu: {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: "100vw",
+      height: "100vh",
+      backgroundColor: "#F2FCDC",
+      zIndex: 3,
+      alignItems: "center",
+      justifyContent: "center",
+      display: "flex",
+      gap: 32,
+    },
+    mobileLogIn: {
+      borderBottomWidth: 2,
+      borderBottomColor: "#384718",
     },
     heroButton: {
       paddingHorizontal: 64,
@@ -233,9 +459,19 @@ const makeStyles = (width) =>
       flexBasis: "40%",
       display: "flex",
     },
+    heroTop: {
+      display: "flex",
+      alignItems: "center",
+    },
     heroImage: {
       height: "100%",
       width: undefined,
+      aspectRatio: "7 / 4",
+      resizeMode: "contain",
+    },
+    heroImageSmall: {
+      width: getHeroImageWidth(width),
+      height: undefined,
       aspectRatio: "7 / 4",
       resizeMode: "contain",
     },
@@ -245,9 +481,11 @@ const makeStyles = (width) =>
     h1Small: {
       fontSize: 48,
       marginBottom: 20,
+      textAlign: "center",
     },
     featureImages: {
-      width: "65vw",
+      width: getFeatureImageWidth(width),
+      maxWidth: 1100,
       height: undefined,
       aspectRatio: "16 / 9",
       resizeMode: "contain",
@@ -291,13 +529,13 @@ const makeStyles = (width) =>
     },
     footerText: {
       color: "#84A739",
-      fontSize: 12,
+      fontSize: width >= 600 ? 12 : 10,
       alignSelf: "center",
       paddingTop: 8,
       paddingBottom: 8,
     },
     footerCopyright: {
-      width: "85%",
+      width: getSectionWidth(width),
       alignSelf: "center",
       borderTopWidth: 1,
       borderTopColor: "#84A739",

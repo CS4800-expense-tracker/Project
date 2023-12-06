@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { Link } from "@react-navigation/native";
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
@@ -8,6 +8,7 @@ import Heading2 from "./heading2";
 import BodyText, { bodyTextStyle } from "./body-text";
 import AnimatedButton from "./animated-button";
 import { SelectList } from "react-native-dropdown-select-list";
+import { getH2XSmallMobileSize } from "./font-sizes";
 
 export default function Account() {
   const [budget, setBudget] = React.useState("");
@@ -16,6 +17,9 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = React.useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = React.useState("");
   const linkedBank = false;
+
+  const { height, width } = useWindowDimensions();
+  const styles = makeStyles(width);
 
   const totalBudget = 1000;
   const expenseCategories = [
@@ -53,7 +57,6 @@ export default function Account() {
           "%)",
       });
     });
-    console.log(selectListData);
     return selectListData;
   };
 
@@ -138,18 +141,32 @@ export default function Account() {
   return (
     <View style={styles.container}>
       <Sidebar page="account" />
-      <SectionView>
-        <Heading1 style={styles.bottomMarginLarge}>Account Settings</Heading1>
-        <Heading2 style={styles.bottomMarginMediumSmall}>
+      <SectionView alignItems={width >= 1200 ? "" : "center"}>
+        <Heading1 style={[styles.bottomMarginLarge, styles.mobileCenter]}>
+          Account Settings
+        </Heading1>
+        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
           Update your monthly budget
         </Heading2>
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           Current budget
         </Heading2>
         <BodyText style={[styles.input, styles.bottomMarginSmall]}>
           ${totalBudget}
         </BodyText>
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           New budget
         </Heading2>
         <TextInput
@@ -183,10 +200,16 @@ export default function Account() {
             onPress={onClearMonthlyBudgetPress}
           />
         </View>
-        <Heading2 style={styles.bottomMarginMediumSmall}>
+        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
           Create a new expense category
         </Heading2>
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           Category name
         </Heading2>
         <TextInput
@@ -198,7 +221,13 @@ export default function Account() {
           maxLength={100}
           style={[bodyTextStyle(), styles.bottomMarginSmall, styles.input]}
         />
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           Category budget
         </Heading2>
         <TextInput
@@ -210,7 +239,14 @@ export default function Account() {
           maxLength={2}
           style={[bodyTextStyle(), styles.input]}
         />
-        <BodyText style={[styles.bottomMarginXSmall, { fontSize: 14 }]}>
+        <BodyText
+          style={[
+            styles.bottomMarginXSmall,
+            ,
+            styles.mobileCenter,
+            { fontSize: 14 },
+          ]}
+        >
           This is a percentage of your monthly budget.
         </BodyText>
         <View style={[styles.flexRow, styles.bottomMarginLarge]}>
@@ -235,24 +271,38 @@ export default function Account() {
             onPress={onClearNewCategoryPress}
           />
         </View>
-        <Heading2 style={styles.bottomMarginMediumSmall}>
+        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
           Edit an expense category
         </Heading2>
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           Category name
         </Heading2>
-        <SelectList
-          setSelected={(val) => setSelectedCategory(val)}
-          data={getSelectListData(expenseCategories)}
-          save="key"
-          search={false}
-          boxStyles={[styles.dropdown, { alignItems: "center" }]}
-          dropdownStyles={styles.dropdown}
-          inputStyles={bodyTextStyle()}
-          dropdownTextStyles={bodyTextStyle()}
-        />
+        <View style={{ width: "100%" }}>
+          <SelectList
+            setSelected={(val) => setSelectedCategory(val)}
+            data={getSelectListData(expenseCategories)}
+            save="key"
+            search={false}
+            boxStyles={[styles.dropdown, { alignItems: "center" }]}
+            dropdownStyles={styles.dropdown}
+            inputStyles={bodyTextStyle()}
+            dropdownTextStyles={bodyTextStyle()}
+          />
+        </View>
         <View style={styles.bottomMarginSmall}></View>
-        <Heading2 style={[styles.bottomMarginXSmall, styles.h2Small]}>
+        <Heading2
+          style={[
+            styles.bottomMarginXSmall,
+            styles.h2XSmall,
+            styles.mobileCenter,
+          ]}
+        >
           New budget
         </Heading2>
         <TextInput
@@ -264,7 +314,14 @@ export default function Account() {
           maxLength={2}
           style={[bodyTextStyle(), styles.input]}
         />
-        <BodyText style={[styles.bottomMarginXSmall, { fontSize: 14 }]}>
+        <BodyText
+          style={[
+            styles.bottomMarginXSmall,
+            ,
+            styles.mobileCenter,
+            { fontSize: 14 },
+          ]}
+        >
           This is a percentage of your monthly budget.
         </BodyText>
         <View style={[styles.flexRow, styles.bottomMarginLarge]}>
@@ -289,10 +346,10 @@ export default function Account() {
             onPress={onClearEditedCategoryPress}
           />
         </View>
-        <Heading2 style={styles.bottomMarginSmall}>
+        <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
           Link your bank account
         </Heading2>
-        <BodyText style={styles.bottomMarginSmall}>
+        <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
           You {linkedBank ? "already" : "do not currently"} have a bank account
           connected with PennyWise
         </BodyText>
@@ -315,67 +372,74 @@ export default function Account() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    display: "flex",
-    flexDirection: "row",
-    alignContent: "space-between",
-    height: "100%",
-  },
-  bottomMarginXSmall: {
-    marginBottom: 8,
-  },
-  bottomMarginSmall: {
-    marginBottom: 16,
-  },
-  bottomMarginMediumSmall: {
-    marginBottom: 24,
-  },
-  bottomMarginMedium: {
-    marginBottom: 32,
-  },
-  bottomMarginLarge: {
-    marginBottom: 64,
-  },
-  sectionView: {
-    display: "flex",
-    alignItems: "center",
-    width: "80%",
-  },
-  flexRow: {
-    display: "flex",
-    flexDirection: "row",
-    gap: 16,
-  },
-  input: {
-    backgroundColor: "#ddd",
-    borderRadius: 8,
-    padding: 8,
-    width: 384,
-  },
-  budgetButton: {
-    width: 128,
-  },
-  budgetButtonView: {
-    borderRadius: 32,
-    paddingVertical: 8,
-  },
-  bankLinkButtonView: {
-    borderRadius: 32,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  h2Small: {
-    fontSize: 24,
-  },
-  dropdown: {
-    backgroundColor: "#ddd",
-    borderRadius: 8,
-    paddingLeft: 8,
-    paddingRight: 8,
-    paddingBottom: 8,
-    paddingTop: 8,
-    width: 384,
-    borderWidth: "none",
-  },
-});
+const makeStyles = (width) =>
+  StyleSheet.create({
+    container: {
+      display: "flex",
+      flexDirection: width >= 1200 ? "row" : "column",
+      alignContent: width >= 1200 ? "space-between" : "",
+      height: "100%",
+    },
+    bottomMarginXSmall: {
+      marginBottom: 8,
+    },
+    bottomMarginSmall: {
+      marginBottom: 16,
+    },
+    bottomMarginMediumSmall: {
+      marginBottom: 24,
+    },
+    bottomMarginMedium: {
+      marginBottom: 32,
+    },
+    bottomMarginLarge: {
+      marginBottom: 64,
+    },
+    sectionView: {
+      display: "flex",
+      alignItems: "center",
+      width: "80%",
+    },
+    flexRow: {
+      display: "flex",
+      flexDirection: "row",
+      gap: 16,
+    },
+    input: {
+      backgroundColor: "#ddd",
+      borderRadius: 8,
+      padding: 8,
+      maxWidth: 384,
+      width: "100%",
+    },
+    budgetButton: {
+      width: 128,
+    },
+    budgetButtonView: {
+      borderRadius: 32,
+      paddingVertical: 8,
+    },
+    bankLinkButtonView: {
+      borderRadius: 32,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+    },
+    h2XSmall: {
+      fontSize: getH2XSmallMobileSize(width),
+    },
+    dropdown: {
+      backgroundColor: "#ddd",
+      borderRadius: 8,
+      paddingLeft: 8,
+      paddingRight: 8,
+      paddingBottom: 8,
+      paddingTop: 8,
+      maxWidth: 384,
+      width: "100%",
+      alignSelf: width >= 1200 ? "auto" : "center",
+      borderWidth: "none",
+    },
+    mobileCenter: {
+      textAlign: width >= 1200 ? "auto" : "center",
+    },
+  });
