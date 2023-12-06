@@ -121,7 +121,7 @@ export default function Sidebar(props) {
       <View
         style={[
           styles.mobileHeaderSections,
-          displayMenu ? "" : { display: "none" },
+          displayMenu && width < 1200 ? "" : { display: "none" },
         ]}
       >
         <Link to={{ screen: "Overview" }} style={styles.mobileLink}>
