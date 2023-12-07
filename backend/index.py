@@ -1,13 +1,25 @@
 import json
+import time
 from os import getenv, environ as env
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
 from dotenv import load_dotenv, find_dotenv
-from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request
+from flask import Flask, render_template, request, url_for, redirect, jsonify, session, request, Response
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 from sqlalchemy import and_, extract
 import datetime
+from openai import OpenAI
 from flask_bcrypt import Bcrypt
+
+import plaid
+from plaid.model.link_token_create_request import LinkTokenCreateRequest
+from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
+from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
+from plaid.model.transactions_sync_request import TransactionsSyncRequest
+from plaid.model.products import Products
+from plaid.model.country_code import CountryCode
+from plaid.api import plaid_api
 
 from sqlalchemy.sql import func
 
@@ -21,7 +33,41 @@ oauth = OAuth(app)
 app.secret_key = env.get("APP_SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = env.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
+client = OpenAI()
+bcrypt = Bcrypt(app) 
+
+
+# easier way to switch development and sandbox keys
+PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
+PLAID_ENV = env.get("PLAID_ENV")
+# this won't work for now, cause we need to have a publicly facing webhook for this
+# they recommended making a different server running on a diff port for security, but like fuck that too much work
+webhook_url = 'http://127.0.0.1:5000/recieve_plaid_webhook'
+
+PLAID_SECRET = None
+host = None
+if PLAID_ENV == 'sandbox':
+    host = plaid.Environment.Sandbox
+    PLAID_SECRET = env.get("PLAID_SANDBOX_SECRET")
+
+if PLAID_ENV == 'development':
+    host = plaid.Environment.Development
+    PLAID_SECRET = env.get("PLAID_DEVELOPMENT_SECRET")
+
+configuration = plaid.Configuration(
+    host=host,
+    api_key={
+        'clientId': PLAID_CLIENT_ID,
+        'secret': PLAID_SECRET,
+        'plaidVersion': '2020-09-14'
+    }
+)
+
+api_client = plaid.ApiClient(configuration)
+plaid_client = plaid_api.PlaidApi(api_client)
 
 oauth.register(
     "auth0",
@@ -94,6 +140,10 @@ class SubExpense(db.Model):
 
 
 """             STARTING ROUTES SECTION          """
+# @app.before_request
+# def basic_authentication():
+#     if request.method.lower() == 'options':
+#         return Response()
 
 @app.route("/")
 def home():
@@ -110,43 +160,91 @@ def home():
     Cause for a big table this will take up a LOT of memory  
     """    
     return "Hello World"
-## TODO: Make a signup route
-## after a user logs in, we get back a token that contains user information. We can use that
-## to pull up their shit in the db
 
-@app.route("/login")
+@app.route("/login", methods=["POST"])
 def login():
-    return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True)
-    )
+    ## check if user exists in database with their password. If yes, return userID, if no, return error
+    try:
+        data = request.get_json()
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
-@app.route("/signup")
+        email = data.get('email')
+        password = data.get('password')
+
+        ## verify user exists in db
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) < 1 or curr_user == []):
+            raise Exception("User not found in DB")
+        
+        ## now that we know the user exists, check to see that the password is correct
+        is_valid = bcrypt.check_password_hash(curr_user[0].password, password) 
+
+        if(is_valid):
+            sending_dict = {}
+            if(curr_user[0].plaid_access_token is not None):
+                sending_dict["has_plaid_token"] = True
+            sending_dict["user_id"] = curr_user[0].user_id
+            return jsonify(sending_dict)
+        else:
+            raise Exception("Invalid password")
+
+    except Exception as e:
+        error_message = {"error": f"Server Error: {str(e)}"}
+        return jsonify(error_message) 
+
+@app.route("/signup", methods=["POST"])
 def signup():
-    return oauth.auth0.authorize_redirect(
-        screen_hint="signup",
-        redirect_uri=url_for("callback", _external=True)
-    )
+    try:
+        data = request.get_json()
+        if(data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Email or password not specified")
 
-@app.route("/callback", methods=["GET", "POST"])
-def callback():
-    token = oauth.auth0.authorize_access_token()
-    session["user"] = token
-    return redirect("/")
+        email = data.get('email')
+        name = data.get("name")
+        category_arr = data.get("categories")
+        budget = data.get("budget")
+        unhashed_password = data.get("password")
+        hashed_password = bcrypt.generate_password_hash(unhashed_password).decode('utf-8') 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(
-        "https://" + env.get("AUTH0_DOMAIN")
-        + "/v2/logout?"
-        + urlencode(
-            {
-                "returnTo": url_for("home", _external=True),
-                "client_id": env.get("AUTH0_CLIENT_ID"),
-            },
-            quote_via=quote_plus,
-        )
-    )
+        # Check to see if user already exists in server
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) > 0):
+            raise Exception("User already signed up")
+
+        ## adding to user category
+        new_user = User(email=email, name=name, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        user_id = new_user.user_id
+        
+        # adding all user defined categories
+        for category in category_arr:
+            category_name = category["name"]
+            category_percent = int(category["amount"]) // 100
+
+            new_category = Category(user_id=user_id, name=category_name, percent=category_percent, timestamp=datetime.datetime.now())
+            db.session.add(new_category)
+        db.session.commit()
+
+        # creating the budget for the user
+        new_budget = TotalBudget(user_id=user_id, total_budget=budget, timestamp=datetime.datetime.now())
+        db.session.add(new_budget)
+        db.session.commit()
+
+        return jsonify({"user_id" : user_id})
+        
+
+    except Exception as e:
+        error_message = {"error": f"Server Error: {str(e)}"}
+        return jsonify(error_message) 
+    
+    
+### All the routes work fine, just need to add some exception handlers ###
+### Need to edit the DELETE methods so it can delete all the information held in other tables with the same user_id/category/expense ###
+
+## Removed all login routes from backend cause it just does not work lol
 
 ### These are all the routes that are currently in use, more of the routes that can be used in the future are stored in "routes.py"
 
@@ -185,7 +283,6 @@ def get_user(user_id):
     try:
         user = User.query.get(user_id)
         return jsonify({"name" : user.name, "email" : user.email})
-        # return f'Name: {user.name}, Email: {user.email}'
     except Exception as e:
         error_message = {"error": f"Error finding user: {str(e)}"}
         return jsonify(error_message)
@@ -837,6 +934,201 @@ def get_total_spent_this_month(user_id):
     except Exception as e:
         error_message = {"error": f"Error accessing expenses: {str(e)}"}
         return jsonify(error_message)
+
+def categorize(expense_name, user_id):
+    """
+    This method should categorize expenses that are inputted by plaid
+
+    Parameters: 
+    - category_arr
+        - Should an array of tuples
+        - Each tuple should be (category_name: String, category_id: int)
+    - expense_name
+        - A string which is the store name we are categorizing
+    
+    Returns a number which is the final category
+    """
+    # we need to build out category array because it's all a part of the db shit
+    # so we can just build it in this method (?)
+
+    # timestamp must be within this month
+    category_arr = db.session.query(Category.name, Category.category_id).filter(Category.user_id == user_id).all()
+
+    completion = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a wonderful AI machine that determines what category of purchase some given purchase name falls into. You can choose from the list of categories that the user provides as an array. This array will contain a list of tuples, with the structure (name, id). The user will then send a purchase name, and you must deduce what category it best falls under based on the list given in the first line of the message. Choose the category that best fits this purchase, and only return the id that corresponds to this name. You should ONLY return the id, do not return any other information."},
+            {"role": "user", "content": f"{category_arr}. {expense_name}."}
+        ]
+    )
+
+    return (int(completion.choices[0].message.content))
+
+def plaid_upload_new_expense(item_id: str):
+    try:
+        result = db.session.query(User).filter(User.item_id == item_id).all() 
+        if(result == [] or result is None):
+            raise Exception("User not found in db")
+        user = result[0]
+
+        cursor = user.cursor
+        user_access_token = user.access_token
+        user_id = user.user_id
+        # New transaction updates since "cursor"
+        added = []
+        modified = []
+        removed = [] # Removed transaction ids
+        has_more = True
+        # Iterate through each page of new transaction updates for item
+        while has_more:
+            request = TransactionsSyncRequest(
+                access_token=user_access_token,
+                cursor=cursor,
+            )
+            response = plaid_client.transactions_sync(request)
+            # Add this page of results
+            added.extend(response['added'])
+            has_more = response['has_more']
+            # Update cursor to the next cursor
+            cursor = response['next_cursor']
+
+
+        # updating the user's cursor position
+        user.cursor = cursor
+
+
+        ## adding all expense and subexpenses
+        for item in added:
+            total_spent = item["amount"]
+            timestamp = item["datetime"]
+            store_name = item["merchant_name"]
+            category_id = categorize(store_name, user_id)
+
+            new_expense = Expense(
+                user_id=user_id,
+                store_name=store_name,
+                total_spent=total_spent,
+                timestamp=timestamp
+            )
+
+            db.session.add(new_expense)
+            db.session.commit()
+
+            new_sub_expense = SubExpense(
+                expense_id = new_expense.expense_id,
+                category_id = category_id,
+                spent = total_spent
+            )
+
+            db.session.add(new_sub_expense)
+            db.session.commit()
+    except Exception as e:
+        return f"Error: {e}"
+
+
+
+@app.route("/recieve_plaid_webhook", methods=['POST'])
+def recieve_plaid_webhook():
+    try:
+        data = request.get_json()
+        if(not data or len(data) < 1):
+            raise Exception("No requesty body found")
+        
+        product = data['webhook_type']
+        code = data['webhook_code']
+        item_id = data["item_id"]
+
+        if (product == "TRANSACTIONS"):
+            if (code == "SYNC_UPDATES_AVAILABLE"):
+                plaid_upload_new_expense(item_id)
+            else:
+                # not raising an exception because I think then the webhook would keep on refiring
+                # which is very annoying (you NEED to send a status code of 200 within 10 seconds or it'll resend)
+                print("Unknown webhook code sent")
+        else:
+            print("Unknown webhook product sent")
+
+        return {"status": "recieved :D"}
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@app.route("/create_link_token", methods=['POST'])
+def create_link_token():
+    # The assumption here is that the user ID we are creating a link token for will be passed in 
+    # through the body of the request
+    try:
+        data = request.get_json()
+
+        if(data is None or len(data) < 1):
+            raise Exception("the request body was empty or none.")
+        
+        # either the user id will be passed in, or the email of the user. Don't quite know yet
+        user_id = data["user_id"]
+
+        # Create a link_token for the given user
+        req = LinkTokenCreateRequest(
+                user=LinkTokenCreateRequestUser(
+                    client_user_id=str(user_id),
+                ),
+                products=[Products("transactions")],
+                client_name="CS 4800 Expense Tracker",
+                country_codes=[CountryCode('US')],
+                redirect_uri="http://localhost:5000/callback",
+                language='en',
+                # For now, webhook is left blank. We will fix that in a little
+                webhook=webhook_url,
+                client_id=PLAID_CLIENT_ID,
+                secret=PLAID_SECRET
+            )
+        response = plaid_client.link_token_create(req)
+
+        # Send the data to the client
+        return jsonify(response.to_dict())
+    except Exception as e:
+        return f"Error: {e}"
+
+def save_access_token_and_item_id_in_user_row(access_token: str, item_id: str, user_id: int):
+    # Thie method will just take in a user id and set the access token 
+    # and item token for them when they link a bank account
+    try:
+        db.session.query(User).filter(User.user_id == user_id).update({
+            User.plaid_access_token: access_token,
+            User.plaid_item_id: item_id
+        })
+        db.session.commit()
+    except Exception as e:
+        return f"Error: {e}"
+
+@app.route('/set_access_token', methods=['POST'])
+def exchange_public_token():
+    try:
+        data = request.get_json()
+
+        if (data is None or len(data) < 1):
+            raise Exception("No data was sent.")
+        
+        public_token = data["public_token"]
+        user_id = data["user_id"]
+        req = ItemPublicTokenExchangeRequest(
+            public_token=public_token,
+            client_id=PLAID_CLIENT_ID,
+            secret=PLAID_SECRET
+        )
+        response = plaid_client.item_public_token_exchange(req)
+        access_token = response['access_token']
+        item_id = response['item_id']
+        save_access_token_and_item_id_in_user_row(access_token, item_id, user_id)
+        # whenever we perform anything with plaid API, we need to ask for the user id
+        # so that we can also get that user's access key
+        return jsonify({'public_token_exchange': 'complete'})
+    except Exception as e:
+        return f"Error: {e}"
+
+@app.route('/health', methods=['GET'])
+def health():
+    return f"I'm healthy!{time.time()}"
+
 
 if __name__ == "__main__":
     app.run(host="localhost", port=3000)
