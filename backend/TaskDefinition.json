@@ -66,6 +66,16 @@
             ]
         }
     ],
+    "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-create-group": "true",
+            "awslogs-group": "/ecs/CS4800",
+            "awslogs-region": "us-west-1",
+            "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+    },
     "family": "CS4800",
     "executionRoleArn": "arn:aws:iam::410130958579:role/CS4800ECSTaskExecutionRole",
     "networkMode": "awsvpc",
