@@ -70,9 +70,10 @@
                     "awslogs-create-group": "true",
                     "awslogs-group": "/ecs/CS4800",
                     "awslogs-region": "us-west-1",
-                    "awslogs-stream-prefix": "ecs"
-                },
-                "secretOptions": []
+                    "awslogs-stream-prefix": "ecs",
+                    "mode": "non-blocking",
+                    "max-buffer-size": "20m"
+                }
             }
         }
     ],
