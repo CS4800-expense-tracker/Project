@@ -68,7 +68,7 @@
     ],
     "family": "CS4800",
     "executionRoleArn": "arn:aws:iam::410130958579:role/CS4800ECSTaskExecutionRole",
-    "networkMode": "host",
+    "networkMode": "awsvpc",
     "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
@@ -93,8 +93,8 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "1024",
-    "memory": "1024",
+    "cpu": "1000",
+    "memory": "1000",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
