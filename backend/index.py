@@ -45,7 +45,7 @@ PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
 PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
-webhook_url = 'http://127.0.0.1:5000/recieve_plaid_webhook'
+webhook_url = 'http://api.pennywise.money/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -140,11 +140,6 @@ class SubExpense(db.Model):
 
 
 """             STARTING ROUTES SECTION          """
-# @app.before_request
-# def basic_authentication():
-#     if request.method.lower() == 'options':
-#         return Response()
-
 @app.route("/")
 def home():
     """
@@ -1032,7 +1027,7 @@ def recieve_plaid_webhook():
     try:
         data = request.get_json()
         if(not data or len(data) < 1):
-            raise Exception("No requesty body found")
+            raise Exception("No request body found")
         
         product = data['webhook_type']
         code = data['webhook_code']
