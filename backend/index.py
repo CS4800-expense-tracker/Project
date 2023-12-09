@@ -154,7 +154,7 @@ def home():
     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
     Cause for a big table this will take up a LOT of memory  
     """    
-    return "Hello World"
+    return "Goodbye World"
 
 @app.route("/login", methods=["POST"])
 def login():
