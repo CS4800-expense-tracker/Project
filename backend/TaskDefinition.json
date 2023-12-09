@@ -63,18 +63,7 @@
                     "name": "SQLALCHEMY_DATABASE_URI",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:SQLALCHEMY_DATABASE_URI::"
                 }
-            ],
-            "logConfiguration": {
-                "logDriver": "awslogs",
-                "options": {
-                    "awslogs-create-group": "true",
-                    "awslogs-group": "/ecs/CS4800",
-                    "awslogs-region": "us-west-1",
-                    "awslogs-stream-prefix": "ecs",
-                    "mode": "non-blocking",
-                    "max-buffer-size": "20m"
-                }
-            }
+            ]
         }
     ],
     "family": "CS4800",
