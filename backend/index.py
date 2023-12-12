@@ -11,6 +11,9 @@ from sqlalchemy import and_, extract
 import datetime
 from openai import OpenAI
 from flask_bcrypt import Bcrypt
+import schedule
+import threading
+
 
 import plaid
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
@@ -1124,6 +1127,62 @@ def exchange_public_token():
 def health():
     return f"I'm healthy!{time.time()}"
 
+# Creating a cron job to create a new total_buget and categories enteries for each user at the beginning of the month
+def add_monthly_budget_categories():
+    # Get the current month and year
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month
 
+    # For all users
+    users = User.query.all()
+    for user in users:
+        # Get the current total budget for the user
+        current_total_budget = TotalBudget.query.filter_by(user_id=user.user_id).order_by(TotalBudget.timestamp.desc()).first()
+
+        if current_total_budget:
+            # Create a new TotalBudget instance for the first day of the current month
+            current_month = datetime.datetime(year, month, 1)
+            new_total_budget = TotalBudget(
+                user_id=user.user_id,
+                timestamp=current_month,
+                total_budget=current_total_budget.total_budget  # Use the current total_budget
+            )
+            db.session.add(new_total_budget)
+
+            # Add new categories for the month for each user based on existing categories
+            categories = Category.query.filter_by(user_id=user.user_id).all()
+            for category in categories:
+                new_category = Category(
+                    user_id=user.user_id,
+                    name=category.name,
+                    percent=category.percent,  # Use the current percentage
+                    timestamp=current_month
+                )
+                db.session.add(new_category)
+    
+    db.session.commit()
+    print("Monthly budgets and categories added successfully.")
+
+# Schedule the job to run at the start of every month
+schedule.every().day.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+
+# # Run the scheduler in an infinite loop
+# while True:
+#     schedule.run_pending()
+
+# if __name__ == "__main__":
+#     app.run(host="localhost", port=3000)
+
+# Function to run the scheduler in a separate thread
+# def run_scheduler():
+#     while True:
+#         schedule.run_pending()
+
+# Create and start the scheduler thread
+# scheduler_thread = threading.Thread(target=run_scheduler)
+# scheduler_thread.start()
+
+# Run the Flask app in the main thread
 if __name__ == "__main__":
     app.run(host="localhost", port=3000)
