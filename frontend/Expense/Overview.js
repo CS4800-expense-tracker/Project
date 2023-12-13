@@ -62,7 +62,7 @@ export default function Overview({ navigation }) {
   const [userData, setUserData] = useState({});
 
   useEffect(() => {
-    fetch(`https://api.pennywise.money/overview/39/${monthNum}/${year}`)
+    fetch(`https://api.pennywise.money/overview/26/${monthNum}/${year}`)
       .then((response) => response.json())
       .then((data) => {
         setUserData(data);
@@ -118,7 +118,7 @@ export default function Overview({ navigation }) {
 
   function getChartSeries() {
     if (userData && userData.category_analysis) {
-      if (available >= 0)
+      if (userData.total_budget - userData.total_spent >= 0)
         return [
           userData.total_spent,
           userData.total_budget - userData.total_spent,
@@ -132,12 +132,15 @@ export default function Overview({ navigation }) {
   }
 
   function getSliceColors() {
-    if (available >= 0) return ["#BCEE51", "#558033"];
+    if (userData.total_budget - userData.total_spent >= 0)
+      return ["#BCEE51", "#558033"];
     else return ["#BCEE51", "#803333"];
   }
 
   function getBudgetTextStyle() {
-    return available >= 0 ? styles.underBudgetText : styles.overBudgetText;
+    return userData.total_budget - userData.total_spent >= 0
+      ? styles.underBudgetText
+      : styles.overBudgetText;
   }
 
   function formatDate(date) {
@@ -176,7 +179,9 @@ export default function Overview({ navigation }) {
                 <View style={[styles.rowFlex]}>
                   <BodyText style={[getBudgetTextStyle()]}>budget </BodyText>
                   <BodyText style={[getBudgetTextStyle()]}>
-                    {available >= 0 ? "this month" : "exceeded"}
+                    {userData.total_budget - userData.total_spent >= 0
+                      ? "this month"
+                      : "exceeded"}
                   </BodyText>
                 </View>
               </View>
@@ -193,11 +198,18 @@ export default function Overview({ navigation }) {
                       source={squareIcon}
                       style={[
                         styles.square,
-                        { tintColor: available >= 0 ? "#558033" : "#803333" },
+                        {
+                          tintColor:
+                            userData.total_budget - userData.total_spent >= 0
+                              ? "#558033"
+                              : "#803333",
+                        },
                       ]}
                     />
                     <BodyText style={[styles.textColor]}>
-                      {available >= 0 ? "Available" : "Deficit"}
+                      {userData.total_budget - userData.total_spent >= 0
+                        ? "Available"
+                        : "Deficit"}
                     </BodyText>
                   </View>
                   <View style={styles.chart}>
@@ -206,19 +218,24 @@ export default function Overview({ navigation }) {
                       style={[styles.square, { tintColor: "#BCEE51" }]}
                     />
                     <BodyText style={[styles.textColor]}>
-                      {available >= 0 ? "Spent" : "Budget"}
+                      {userData.total_budget - userData.total_spent >= 0
+                        ? "Spent"
+                        : "Budget"}
                     </BodyText>
                   </View>
                 </View>
                 <View>
                   <BodyText style={[styles.textColor, styles.chartTextValue]}>
-                    ${Math.abs(userData.total_budget - userData.total_spent)}
+                    $
+                    {Math.abs(
+                      userData.total_budget - userData.total_spent
+                    ).toFixed(2)}
                   </BodyText>
                   <BodyText style={[styles.textColor, styles.chartTextValue]}>
                     $
-                    {available >= 0
-                      ? userData.total_spent
-                      : userData.total_budget}
+                    {userData.total_budget - userData.total_spent >= 0
+                      ? userData.total_spent.toFixed(2)
+                      : userData.total_budget.toFixed(2)}
                   </BodyText>
                 </View>
               </View>
