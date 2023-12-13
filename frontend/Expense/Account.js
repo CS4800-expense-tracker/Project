@@ -20,21 +20,11 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
-<<<<<<< HEAD
   const { state: appContext, dispatch: appDispatch } = useContext(
     AppContext
   );
   const user_id = appContext.userID
   const linkedBank = appContext.isBankLinked
-=======
-  const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
-  const linkedBank =
-    localStorage.getItem("isBankLinked") === "false" ||
-    localStorage.getItem("isBankLinked") === null
-      ? false
-      : true;
-  const user_id = localStorage.getItem("user_id");
->>>>>>> c64af5cd7ab442b79da6f09fdd3564490d001b95
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
