@@ -32,12 +32,12 @@ export default function Overview({ navigation }) {
 
   const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
 
-  const user_id = appContext.userID;
+  const user_id = localStorage.getItem("userID")
   if (!user_id) {
     navigation.navigate("Signup");
   }
 
-  useEffect(() => {}, []);
+  // useEffect(() => {}, []);
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -62,7 +62,8 @@ export default function Overview({ navigation }) {
   const [userData, setUserData] = useState({});
 
   useEffect(() => {
-    fetch(`https://api.pennywise.money/overview/26/${monthNum}/${year}`)
+    // fetch(`https://api.pennywise.money/overview/${user_id}/${monthNum}/${year}`)
+    fetch(`http://127.0.0.1:5000/overview/${user_id}/${monthNum}/${year}`)
       .then((response) => response.json())
       .then((data) => {
         setUserData(data);
