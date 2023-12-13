@@ -1200,7 +1200,7 @@ def add_monthly_budget_categories():
     print("Monthly budgets and categories added successfully.")
 
 # Schedule the job to run at the start of every month
-schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+# schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
 
 # # Run the scheduler in an infinite loop
 # while True:
