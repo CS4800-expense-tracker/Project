@@ -18,6 +18,7 @@ export default function Account({ navigation }) {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryBudget, setNewCategoryBudget] = useState("");
   const [selectedCategoryEdit, setSelectedCategoryEdit] = useState("");
+  const [categoryEditName, setCategoryEditName] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [selectedCategoryDelete, setSelectedCategoryDelete] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
@@ -33,14 +34,14 @@ export default function Account({ navigation }) {
   const [update, setUpdate] = useState(false);
 
   useEffect(() => {
-    fetch(`https://api.pennywise.money/total_budget/26`)
+    fetch(`https://api.pennywise.money/total_budget/${user_id}`)
       .then((response) => response.json())
       .then((data) => {
         setUserBudget(data);
         console.log("This is from fetch", data);
       })
       .catch((err) => console.error(err));
-    fetch(`https://api.pennywise.money/categories/26`)
+    fetch(`https://api.pennywise.money/categories/${user_id}`)
       .then((response) => response.json())
       .then((data) => {
         setUserCategories(data);
@@ -50,24 +51,20 @@ export default function Account({ navigation }) {
   const totalBudget = 1000;
   const expenseCategories = [
     {
-      expenseName: "Groceries",
-      spent: 160,
-      total: 400,
+      name: "Groceries",
+      percent: 40,
     },
     {
-      expenseName: "Utilities",
-      spent: 240,
-      total: 300,
+      name: "Utilities",
+      percent: 30,
     },
     {
-      expenseName: "Electronics",
-      spent: 15,
-      total: 100,
+      name: "Electronics",
+      percent: 20,
     },
     {
-      expenseName: "Cars",
-      spent: 130,
-      total: 200,
+      name: "Cars",
+      percent: 10,
     },
   ];
 
@@ -103,7 +100,10 @@ export default function Account({ navigation }) {
         body: JSON.stringify({ total_budget: budget }),
       };
 
-      fetch(`https://api.pennywise.money/total_budget/26`, requestOptions)
+      fetch(
+        `https://api.pennywise.money/total_budget/${user_id}`,
+        requestOptions
+      )
         .then((response) => response.json())
         .then((data) => {
           // console.log(data);
@@ -141,7 +141,18 @@ export default function Account({ navigation }) {
     setNewCategoryBudget(newText);
   };
   const onSubmitNewCategoryPress = () => {
-    if (newCategoryName.length !== 0 && newCategoryBudget.length !== 0) {
+    let totalCurrentPercentages = 0;
+    userCategories.map((element) => {
+      totalCurrentPercentages += element.percent;
+    });
+    const newTotalPercentages =
+      totalCurrentPercentages + Number(newCategoryBudget);
+    if (
+      newCategoryName.length !== 0 &&
+      newCategoryBudget.length !== 0 &&
+      totalCurrentPercentages <= 100 &&
+      newTotalPercentages <= 100
+    ) {
       // Insert code here to set user's new category name and its budget percentage in backend database
       // 'newCategoryName' stores the new category name
       // 'newCategoryBudget' stores the category's budget percentage
@@ -154,7 +165,7 @@ export default function Account({ navigation }) {
         }),
       };
 
-      fetch(`https://api.pennywise.money/category/26`, requestOptions)
+      fetch(`https://api.pennywise.money/category/${user_id}`, requestOptions)
         .then((response) => response.json())
         .then((data) => {
           // console.log(data);
@@ -172,6 +183,17 @@ export default function Account({ navigation }) {
     setNewCategoryBudget("");
   };
 
+  const onEditCategoryNameChanged = (text) => {
+    let newText = "";
+    let chars =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789 '&(),./:-'\"";
+
+    for (let i = 0; i < text.length; i++) {
+      if (chars.indexOf(text[i]) > -1) newText += text[i];
+    }
+
+    setCategoryEditName(newText);
+  };
   const onEditCategoryBudgetChanged = (text) => {
     let newText = "";
     let numbers = "0123456789";
@@ -183,18 +205,56 @@ export default function Account({ navigation }) {
     setEditedCategoryBudget(newText);
   };
   const onSubmitEditedCategoryPress = () => {
+    let totalCurrentPercentages = 0;
+    userCategories.map((element) => {
+      totalCurrentPercentages += element.percent;
+    });
+    const newTotalPercentages =
+      totalCurrentPercentages -
+      selectedCategoryEdit.split(" ")[1].slice(1, 3) +
+      Number(newCategoryBudget);
     if (
       selectedCategoryEdit.length !== 0 &&
-      editedCategoryBudget.length !== 0
+      editedCategoryBudget.length !== 0 &&
+      totalCurrentPercentages <= 100 &&
+      newTotalPercentages <= 100
     ) {
       // Insert code here to set user's new budget for the selected category in backend database
       // 'selectedCategory' stores the category name
       // 'editedCategoryBudget' stores the new budget for the selected category
+      const requestOptions = {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:
+            categoryEditName.length === 0
+              ? selectedCategoryEdit.split(" ")[0]
+              : categoryEditName,
+          percent: Number(editedCategoryBudget),
+        }),
+      };
+
+      fetch(
+        `https://api.pennywise.money/category/${user_id}/${
+          selectedCategoryEdit.split(" ")[0]
+        }`,
+        requestOptions
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data);
+        })
+        .catch((err) => console.error(err));
+      setCategoryEditName("");
       setEditedCategoryBudget("");
+      setTimeout(() => {
+        location.reload(true);
+      }, 500);
     }
   };
   const onClearEditedCategoryPress = () => {
     setEditedCategoryBudget("");
+    setCategoryEditName("");
   };
 
   const onDeleteCategory = () => {
@@ -204,7 +264,9 @@ export default function Account({ navigation }) {
     };
 
     fetch(
-      `https://api.pennywise.money/category/26/${selectedCategoryDelete}`,
+      `https://api.pennywise.money/category/${user_id}/${
+        selectedCategoryDelete.split(" ")[0]
+      }`,
       requestOptions
     )
       .then((response) => response.json())
@@ -219,7 +281,20 @@ export default function Account({ navigation }) {
 
   const onDeleteAccountPress = () => {
     if (deleteAccount.toLowerCase() === "delete my account") {
-      setDeleteAccount("");
+      const requestOptions = {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      };
+
+      fetch(`https://api.pennywise.money/user/${user_id}`, requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data);
+        })
+        .catch((err) => console.error(err));
+      setTimeout(() => {
+        navigation.navigate("Landing");
+      }, 500);
     }
   };
 
@@ -376,7 +451,7 @@ export default function Account({ navigation }) {
               styles.mobileCenter,
             ]}
           >
-            Category budget
+            Category budget percentage
           </Heading2>
           <TextInput
             keyboardType="numeric"
@@ -436,7 +511,7 @@ export default function Account({ navigation }) {
             <SelectList
               setSelected={(val) => setSelectedCategoryEdit(val)}
               data={getSelectListData(userCategories)}
-              save="key"
+              save="value"
               search={false}
               boxStyles={[styles.dropdown, { alignItems: "center" }]}
               dropdownStyles={styles.dropdown}
@@ -452,7 +527,35 @@ export default function Account({ navigation }) {
               styles.mobileCenter,
             ]}
           >
-            New budget
+            New name
+          </Heading2>
+          <TextInput
+            keyboardType="numeric"
+            onChangeText={(text) => onEditCategoryNameChanged(text)}
+            value={categoryEditName}
+            placeholder="Groceries"
+            placeholderTextColor="#888"
+            maxLength={100}
+            style={[bodyTextStyle(), styles.input]}
+          />
+          <View style={styles.bottomMarginXSmall}></View>
+          <BodyText
+            style={[
+              styles.bottomMarginXSmall,
+              styles.mobileCenter,
+              styles.subText,
+            ]}
+          >
+            Leave this field blank if you do not wish to change the name.
+          </BodyText>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            New budget percentage
           </Heading2>
           <TextInput
             keyboardType="numeric"
@@ -512,7 +615,7 @@ export default function Account({ navigation }) {
             <SelectList
               setSelected={(val) => setSelectedCategoryDelete(val)}
               data={getSelectListData(userCategories)}
-              save="key"
+              save="value"
               search={false}
               boxStyles={[styles.dropdown, { alignItems: "center" }]}
               dropdownStyles={styles.dropdown}
