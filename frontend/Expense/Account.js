@@ -20,11 +20,21 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
+<<<<<<< HEAD
   const { state: appContext, dispatch: appDispatch } = useContext(
     AppContext
   );
   const user_id = appContext.userID
   const linkedBank = appContext.isBankLinked
+=======
+  const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
+  const linkedBank =
+    localStorage.getItem("isBankLinked") === "false" ||
+    localStorage.getItem("isBankLinked") === null
+      ? false
+      : true;
+  const user_id = localStorage.getItem("user_id");
+>>>>>>> c64af5cd7ab442b79da6f09fdd3564490d001b95
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -92,7 +102,7 @@ export default function Account() {
   const onNewCategoryNameChanged = (text) => {
     let newText = "";
     let chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '&(),./:-'\"";
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789 '&(),./:-'\"";
 
     for (let i = 0; i < text.length; i++) {
       if (chars.indexOf(text[i]) > -1) newText += text[i];
@@ -158,7 +168,7 @@ export default function Account() {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
-      }
+      };
       // fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
       fetch("https://api.pennywise.money/create_link_token", tokenConfig)
       .then((response) => (response.json()))
@@ -181,7 +191,7 @@ export default function Account() {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
       const response = fetch("https://api.pennywise.money/set_access_token", {
-      // const response = fetch("http://127.0.0.1:5000/set_access_token", {
+        // const response = fetch("http://127.0.0.1:5000/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
