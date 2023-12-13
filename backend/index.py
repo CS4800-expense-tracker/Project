@@ -1091,7 +1091,9 @@ def create_link_token():
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
+        print(req)
         res = plaid_client.link_token_create(req)
+        print(res)
         # Send the data to the client
         print("we after link token craete request")
         return jsonify(res.to_dict())
