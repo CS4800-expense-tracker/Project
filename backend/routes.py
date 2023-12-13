@@ -687,9 +687,9 @@ def get_expenses(user_id, page_num):
         error_message = {"error": f"Error accessing expenses: {str(e)}"}
         return jsonify(error_message)
 
-# Creating a route that returns each category name, category budget, and total amount spent in that category for a month based on the user_id
-@app.route('/categories_analysis/<user_id>', methods=['GET'])
-def get_categories_analysis(user_id):
+# Creating a route that returns each category name, category budget, and total amount spent in that category for a month, user_id is required
+@app.route('/categories_analysis/<user_id>/<month>/<year>', methods=['GET'])
+def get_categories_analysis(user_id,month,year):
     try:
         total_budget = TotalBudget.query.filter(
             TotalBudget.user_id == user_id
@@ -705,6 +705,9 @@ def get_categories_analysis(user_id):
             )
         ).order_by(Category.timestamp.desc()).all()
 
+        if not categories:
+            return jsonify({"error": "Categories not found"})
+
         # Assigning each category to budget amount based on percentage
         category_analysis = dict()
         category_budget = []
@@ -714,12 +717,11 @@ def get_categories_analysis(user_id):
             budget = (category.percent * total_budget.total_budget) / 100
             category_budget.append(budget)
 
-        # Getting current month expenses for the user
-        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
         expenses = Expense.query.filter(
             and_(
                 Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
             )
         ).order_by(Expense.timestamp.desc()).all()
 
@@ -738,11 +740,7 @@ def get_categories_analysis(user_id):
                 ).order_by(Category.timestamp.desc()).first()
 
                 if category and category.name in category_analysis:
-                    print(category.name)
-                    print(category_analysis[category.name])
                     category_analysis[category.name] += sub_expense.spent
-                    print(sub_expense.spent)
-                    print(category_analysis[category.name])
                 else:
                     return jsonify({"error": "Category not found or doesn't exist"})
         
@@ -760,25 +758,133 @@ def get_categories_analysis(user_id):
         error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
         return jsonify(error_message)
 
-# Create a route that returns the total amount spent so far during a month
-@app.route('/overview/<user_id>', methods=['GET'])
-def get_total_spent_this_month(user_id):
+# Creating a route that returns the total amount spent so far during a month, based on the month number and year requested
+# user_id, month (number), and yaer are required
+@app.route('/total_spent/<user_id>/<month>/<year>', methods=['GET'])
+def get_total_spent(user_id,month,year):
     try:
-        # Getting current month expenses for the user
-        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
         expenses = Expense.query.filter(
             and_(
                 Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
             )
-        ).order_by(Expense.timestamp.desc()).all()
+        ).all()
 
-        total_spent = 0
-        for expense in expenses:
-            total_spent += expense.total_spent
+        total_spent = sum(expense.total_spent for expense in expenses)
 
-        return jsonify({"total_spent": total_spent})
+        total_budgets = TotalBudget.query.filter(
+            and_(
+                TotalBudget.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).first()
+
+        return jsonify({"total_spent": total_spent, "total_budget": total_budgets.total_budget})
 
     except Exception as e:
         error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+    
+# Overview, returns all the things needed in the overview page.
+@app.route('/overview/<user_id>/<month>/<year>', methods=['GET'])
+def get_overview(user_id,month,year):
+    try:
+        user = User.query.filter(User.user_id == user_id).first()
+        if not user:
+            raise Exception("User not found")
+        
+        total_budget = TotalBudget.query.filter(
+            and_(
+                TotalBudget.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).first()
+        
+        if not total_budget:
+            return jsonify({"error": "Total Budget not found"})
+        
+        total_spent = sum(expense.total_spent for expense in expenses)
+        
+        # Get categories for the user
+        categories = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+            )
+        ).order_by(Category.timestamp.desc()).all()
+
+        if not categories:
+            return jsonify({"error": "Categories not found"})
+
+        # Assigning each category to budget amount based on percentage
+        category_analysis = dict()
+        category_budget = []
+        for category in categories:
+            category_analysis[category.name] = 0
+            # Calculate the custom budget for each category
+            budget = (category.percent * total_budget.total_budget) / 100
+            category_budget.append(budget)
+
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        # Getting sub expenses and updating category spendings
+        for expense in expenses:
+            sub_expenses = SubExpense.query.filter(SubExpense.expense_id == expense.expense_id).all()
+            
+            for sub_expense in sub_expenses:
+                # Find the category name based on subexpense's category_id
+                category_id = sub_expense.category_id
+                category = Category.query.filter(
+                    Category.category_id == category_id
+                ).order_by(Category.timestamp.desc()).first()
+
+                if category and category.name in category_analysis:
+                    category_analysis[category.name] += sub_expense.spent
+                else:
+                    return jsonify({"error": "Category not found or doesn't exist"})
+
+        category_analysis_list = [
+            {
+                "name": key,
+                "total_spent": round(value, 2),
+                "category_budget": round(category_budget[i], 2)
+            } 
+            for i, (key, value) in enumerate(category_analysis.items())
+        ]
+
+        five_expenses = Expense.query.filter(
+                Expense.user_id == user_id
+        ).order_by(Expense.timestamp.desc()).limit(5).all()
+
+        if not five_expenses:
+            return jsonify({"error": "No Expenses found for user"})
+
+        expense_info = []
+        for expense in five_expenses:
+            expense_info.append({
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp
+            })
+
+        overview_data = {
+            "user_name": user.name,
+            "total_budget": total_budget.total_budget,
+            "total_spent": total_spent,
+            "category_analysis": category_analysis_list,
+            "last_five_expenses": expense_info
+        }
+        
+        return overview_data
+    except Exception as e:
+        error_message = {"error": f"Error returning user overview info: {str(e)}"}
         return jsonify(error_message)
