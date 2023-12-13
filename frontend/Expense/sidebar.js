@@ -126,12 +126,12 @@ export default function Sidebar(props) {
           displayMenu && width < 1200 ? "" : { display: "none" },
         ]}
       >
-        <Link to={{ screen: "Overview" }} style={styles.mobileLink}>
           <AnimatedPressable
             onMouseEnter={overviewHoverIn}
             onMouseLeave={overviewHoverOut}
             style={[styles.sectionButtonViewMobile]}
           >
+        <Link to={{ screen: "Overview" }} style={styles.mobileLink}>
             <Image
               source={overviewIcon}
               style={
@@ -150,8 +150,8 @@ export default function Sidebar(props) {
             >
               Overview
             </Text>
-          </AnimatedPressable>
         </Link>
+          </AnimatedPressable>
         <Link to={{ screen: "Expenses" }} style={styles.mobileLink}>
           <AnimatedPressable
             onMouseEnter={expensesHoverIn}

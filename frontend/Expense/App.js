@@ -50,19 +50,19 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <ToastProvider>
-      <AppContextProvider>
-        <NavigationContainer linking={linking} theme={myTheme}>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="Landing" component={Landing} />
-            <Stack.Screen name="Overview" component={Overview} />
-            <Stack.Screen name="Expenses" component={Expenses} />
-            <Stack.Screen name="Account" component={Account} />
-            <Stack.Screen name="Login" component={Login} />
-            <Stack.Screen name="Signup" component={Signup} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </AppContextProvider>
-    </ToastProvider>
+    <AppContextProvider>
+      <ToastProvider>
+          <NavigationContainer linking={linking} theme={myTheme}>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="Landing" component={Landing} />
+              <Stack.Screen name="Overview" component={Overview} />
+              <Stack.Screen name="Expenses" component={Expenses} />
+              <Stack.Screen name="Account" component={Account} />
+              <Stack.Screen name="Login" component={Login} />
+              <Stack.Screen name="Signup" component={Signup} />
+            </Stack.Navigator>
+          </NavigationContainer>
+      </ToastProvider>
+    </AppContextProvider>
   );
 }

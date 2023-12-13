@@ -27,12 +27,9 @@ export default function Landing() {
   const useSmallText = width >= 950 ? false : true;
 
   const [displayMenu, setDisplayMenu] = React.useState(false);
-  const payload = {
-    "webhook_type" : "TRANSACTIONS",
-    "webhook_code" : "SOMETHING",
-    "item_id" : "SOMETHING"
-  }
 
+  localStorage.setItem("userID", -1)
+  localStorage.setItem("isBankLinked", false)
   
 
   return (
