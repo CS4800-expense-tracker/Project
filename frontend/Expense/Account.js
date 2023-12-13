@@ -20,11 +20,11 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
-  const { state: appContext, dispatch: appDispatch } = useContext(
+  const { state, dispatch } = useContext(
     AppContext
   );
-  const user_id = appContext.userID
-  const linkedBank = appContext.isBankLinked
+  const user_id = localStorage.getItem("userID")
+  var linkedBank = localStorage.getItem("isBankLinked")
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -159,12 +159,11 @@ export default function Account() {
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
       };
-      // fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
-      fetch("https://api.pennywise.money/create_link_token", tokenConfig)
+      fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
+      // fetch("https://api.pennywise.money/create_link_token", tokenConfig)
       .then((response) => (response.json()))
       .then((data) => {
         setLinkToken(data.link_token)
-        appDispatch({type: "setIsBankLinked", value: true})
       })
       .catch((err) => {
         console.error(err)
@@ -180,14 +179,15 @@ export default function Account() {
   const PlaidLink = (props) => {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
-      const response = fetch("https://api.pennywise.money/set_access_token", {
-        // const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      // const response = fetch("https://api.pennywise.money/set_access_token", {
+        const response = fetch("http://127.0.0.1:5000/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ public_token: public_token, user_id: user_id }),
       });
+      localStorage.setItem("isBankLinked", true)
     }, []);
     const config = {
       token: props.linkToken,

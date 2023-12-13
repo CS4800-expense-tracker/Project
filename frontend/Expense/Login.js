@@ -64,14 +64,15 @@ export default function Login({ navigation }) {
 
   useEffect(() => {
     if (startLogin) {
+      console.log(formData)
       const requestOptions = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       };
 
-      fetch("https://api.pennywise.money/login", requestOptions)
-      // fetch(" http://127.0.0.1:5000/login", requestOptions)
+      // fetch("https://api.pennywise.money/login", requestOptions)
+      fetch(" http://127.0.0.1:5000/login", requestOptions)
         .then((response) => response.json())
         .then((data) => {
           if (data && "error" in data) {
@@ -85,10 +86,8 @@ export default function Login({ navigation }) {
           } else {
             // If we have no error, we just navigate to account overview and we set the user id to context
             if (data) {
-              appDispatch({type: "setUserID", value: data.user_id})
-              if (data.has_plaid_token) {
-                appDispatch({type: "setIsBankLinked", value: true})
-              }
+              localStorage.setItem("userID", data.user_id)
+              localStorage.setItem("isBankLinked", data.has_plaid_token)
               navigation.navigate("Overview");
               return;
             } else {

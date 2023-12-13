@@ -171,9 +171,10 @@ def login():
 
         if(is_valid):
             sending_dict = {}
-            print(curr_user[0].plaid_access_token)
-            print((len(curr_user[0].plaid_access_token) > 0))
-            if(len(curr_user[0].plaid_access_token) > 0): 
+            print(curr_user[0])
+            if(not curr_user[0].plaid_access_token): 
+                sending_dict["has_plaid_token"] = False
+            else:
                 sending_dict["has_plaid_token"] = True
             sending_dict["user_id"] = curr_user[0].user_id
             return jsonify(sending_dict)
@@ -1022,6 +1023,8 @@ def recieve_plaid_webhook():
         data = request.get_json()
         if(not data or len(data) < 1):
             raise Exception("No request body found")
+
+        print("GOT WEBHOOK: ", data)
         
         product = data['webhook_type']
         code = data['webhook_code']
@@ -1029,6 +1032,13 @@ def recieve_plaid_webhook():
 
         if (product == "TRANSACTIONS"):
             if (code == "SYNC_UPDATES_AVAILABLE"):
+                print("got sync")
+                plaid_upload_new_expense(item_id)
+            elif (code == "INITIAL_UPDATE"):
+                print("got initial")
+                plaid_upload_new_expense(item_id)
+                print("got historic")
+            elif (code == "HISTORICAL_UPDATE"):
                 plaid_upload_new_expense(item_id)
             else:
                 # not raising an exception because I think then the webhook would keep on refiring

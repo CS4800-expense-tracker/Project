@@ -178,7 +178,7 @@ export default function Signup({ navigation }) {
           } else {
             // If we have no error, we just navigate to account overview and we set the user id to context
             if (data) {
-              appDispatch({ type: "setUserID", value: data.user_id });
+              localStorage.setItem("userID", data.user_id)
               navigation.navigate("Overview");
               return;
             } else {
