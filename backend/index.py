@@ -1107,10 +1107,10 @@ def create_link_token():
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
-        response = plaid_client.link_token_create(req)
+        res = plaid_client.link_token_create(req)
 
         # Send the data to the client
-        return jsonify(response.to_dict())
+        return jsonify(res.to_dict())
     except Exception as e:
         return f"Error: {e}"
 
