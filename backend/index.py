@@ -212,7 +212,7 @@ def signup():
         # adding all user defined categories
         for category in category_arr:
             category_name = category["name"]
-            category_percent = int(category["amount"]) // 100
+            category_percent = int(category["amount"])
 
             new_category = Category(user_id=user_id, name=category_name, percent=category_percent, timestamp=datetime.datetime.now())
             db.session.add(new_category)
@@ -830,8 +830,8 @@ def delete_sub_expense(sub_expense_id):
         return jsonify(error_message)
 
 # Creating a route that returns each category name, category budget, and total amount spent in that category for a month, user_id is required
-@app.route('/categories_analysis/<user_id>', methods=['GET'])
-def get_categories_analysis(user_id):
+@app.route('/categories_analysis/<user_id>/<month>/<year>', methods=['GET'])
+def get_categories_analysis(user_id,month,year):
     try:
         total_budget = TotalBudget.query.filter(
             TotalBudget.user_id == user_id
@@ -856,12 +856,11 @@ def get_categories_analysis(user_id):
             budget = (category.percent * total_budget.total_budget) / 100
             category_budget.append(budget)
 
-        # Getting current month expenses for the user
-        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
         expenses = Expense.query.filter(
             and_(
                 Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
             )
         ).order_by(Expense.timestamp.desc()).all()
 
@@ -902,24 +901,32 @@ def get_categories_analysis(user_id):
         error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
         return jsonify(error_message)
 
-# Create a route that returns the total amount spent so far during a month, user_id is required
-@app.route('/total_spent_this_month/<user_id>', methods=['GET'])
-def get_total_spent_this_month(user_id):
+# Creating a route that returns the total amount spent so far during a month, based on the month number and year requested
+# user_id, month (number), and yaer are required
+@app.route('/total_spent/<user_id>/<month>/<year>', methods=['GET'])
+def get_total_spent(user_id,month,year):
     try:
-        # Getting current month expenses for the user
-        current_month = int(datetime.datetime.now().strftime('%m'))  # Get the month number as int
         expenses = Expense.query.filter(
             and_(
                 Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
             )
-        ).order_by(Expense.timestamp.desc()).all()
+        ).all()
 
-        total_spent = 0
-        for expense in expenses:
-            total_spent += expense.total_spent
+        total_spent = sum(expense.total_spent for expense in expenses)
 
-        return jsonify({"total_spent": total_spent})
+        total_budgets = TotalBudget.query.filter(
+            and_(
+                TotalBudget.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).first()
+
+        total_budget = total_budgets.total_budget
+
+        return jsonify({"total_spent": total_spent, "total_budget": total_budget})
 
     except Exception as e:
         error_message = {"error": f"Error accessing expenses: {str(e)}"}
@@ -1182,7 +1189,7 @@ def add_monthly_budget_categories():
     print("Monthly budgets and categories added successfully.")
 
 # Schedule the job to run at the start of every month
-schedule.every().day.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+# schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
 
 # # Run the scheduler in an infinite loop
 # while True:
