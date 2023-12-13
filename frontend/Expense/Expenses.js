@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Text, TextInput, Pressable, Button, ScrollView } from "react-native";
-=======
-import React, { useState } from "react";
 import {
   View,
   StyleSheet,
@@ -13,7 +9,6 @@ import {
   ScrollView,
   useWindowDimensions,
 } from "react-native";
->>>>>>> 34b258ce318f6785d40dc5d2049e562f1d27307b
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
 import Heading1 from "./heading1";
@@ -21,6 +16,7 @@ import Heading2 from "./heading2";
 import RecentExpense from "./recent-expense";
 import { SelectList } from "react-native-dropdown-select-list";
 import AnimatedButton from "./animated-button";
+import BodyText from "./body-text";
 
 export default function Expenses() {
   const { height, width } = useWindowDimensions();
@@ -46,6 +42,22 @@ export default function Expenses() {
 
   useEffect(() => {console.log(data)}, [data])
 
+  const Expense = (props) => {
+    const { store_name, timestamp, total_spent, sub_expenses} = props.data;
+
+    // sub_expenses.map((item, key) => {
+    //   const {category_name, spent} = item;
+    //   console.log(category_name, spent)
+    // })
+
+    return (
+    <View style={styles.expenseHeader}>
+      <RecentExpense value={total_spent} name={store_name} date={timestamp} />
+
+    </View>
+    )
+  }
+
   if (data) {
     return (
       <View style={styles.container}>
@@ -54,10 +66,10 @@ export default function Expenses() {
           <Heading1>Expenses</Heading1>
           <ScrollView style={{flex:1, ...styles.subContainer1}}>
             <Heading2 style={styles.h2}>Recent Expenses: </Heading2>
-            {/* Should be a white rectangle that houses the info for the epxense */}
             <View>
-              <Heading2>{data[0].store_name}</Heading2>
-              <Heading2>Spent: {data[0].total_spent}</Heading2>
+              <Expense data={data[0]}></Expense>
+              {/* <Heading2>{data[0].store_name}</Heading2>
+              <Heading2>Spent: {data[0].total_spent}</Heading2> */}
             </View>  
           </ScrollView>
         </SectionView>
