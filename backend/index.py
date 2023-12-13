@@ -1100,7 +1100,7 @@ def create_link_token():
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
                 country_codes=[CountryCode('US')],
-                redirect_uri="http://localhost:5000/callback",
+                redirect_uri="https://pennywise.money.com/",
                 language='en',
                 # For now, webhook is left blank. We will fix that in a little
                 webhook=webhook_url,
