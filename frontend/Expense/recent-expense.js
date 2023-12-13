@@ -5,10 +5,13 @@ import BodyText from "./body-text";
 export default function RecentExpense(props) {
   const value = props.value;
   const name = props.name;
-  const date = props.date;
+  const date = (props.date);
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
+
+
+  
 
   return (
     <View style={styles.spaceBetween}>
