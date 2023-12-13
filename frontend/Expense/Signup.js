@@ -163,7 +163,8 @@ export default function Signup({ navigation }) {
         body: JSON.stringify(formData),
       };
 
-      fetch("http://127.0.0.1:5000/signup", requestOptions)
+      // fetch("http://127.0.0.1:5000/signup", requestOptions)
+      fetch("https://api.pennywise.money/signup", requestOptions)
         .then((response) => response.json())
         .then((data) => {
           if (data && "error" in data) {

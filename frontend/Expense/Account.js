@@ -23,7 +23,7 @@ export default function Account() {
   const { state: appContext, dispatch: appDispatch } = useContext(
     AppContext
   );
-  const linkedBank = localStorage.getItem("isBankLinked")
+  const linkedBank = localStorage.getItem("isBankLinked") === "false" ? false : true;
   const user_id = localStorage.getItem("user_id")
 
   const { height, width } = useWindowDimensions();
@@ -154,7 +154,9 @@ export default function Account() {
   const BankButton = () => {
     const [linkToken, setLinkToken] = useState(null);
     const generateToken = async () => {
-      const response = await fetch("http://api.pennywise.money/create_link_token", {
+      const response = await fetch ("http://127.0.0.1:5000/create_link_token", {
+      // const response = await fetch ("https://8df1-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/create_link_token", {
+      // const response = await fetch("https://api.pennywise.money/create_link_token", {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
@@ -177,7 +179,9 @@ export default function Account() {
   const PlaidLink = (props) => {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
-      const response = fetch("http://api.pennywise.money/set_access_token", {
+      // const response = fetch("https://api.pennywise.money/set_access_token", {
+      const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      // const response = fetch ("https://8df1-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

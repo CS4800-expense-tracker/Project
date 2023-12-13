@@ -14,9 +14,11 @@ from flask_bcrypt import Bcrypt
 
 import plaid
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
+from plaid.model.webhook_type import WebhookType
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
+from plaid.model.sandbox_item_fire_webhook_request import SandboxItemFireWebhookRequest
 from plaid.model.products import Products
 from plaid.model.country_code import CountryCode
 from plaid.api import plaid_api
@@ -34,9 +36,8 @@ app.secret_key = env.get("APP_SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = env.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
-client = OpenAI()
+open_api_client = OpenAI()
 bcrypt = Bcrypt(app) 
 
 
@@ -45,7 +46,8 @@ PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
 PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
-webhook_url = 'http://api.pennywise.money/recieve_plaid_webhook'
+# webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
+webhook_url = ' https://cc33-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -949,7 +951,7 @@ def categorize(expense_name, user_id):
     # timestamp must be within this month
     category_arr = db.session.query(Category.name, Category.category_id).filter(Category.user_id == user_id).all()
 
-    completion = client.chat.completions.create(
+    completion = open_api_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a wonderful AI machine that determines what category of purchase some given purchase name falls into. You can choose from the list of categories that the user provides as an array. This array will contain a list of tuples, with the structure (name, id). The user will then send a purchase name, and you must deduce what category it best falls under based on the list given in the first line of the message. Choose the category that best fits this purchase, and only return the id that corresponds to this name. You should ONLY return the id, do not return any other information."},
@@ -976,16 +978,16 @@ def plaid_upload_new_expense(item_id: str):
         has_more = True
         # Iterate through each page of new transaction updates for item
         while has_more:
-            request = TransactionsSyncRequest(
+            req = TransactionsSyncRequest(
                 access_token=user_access_token,
                 cursor=cursor,
             )
-            response = plaid_client.transactions_sync(request)
+            res = plaid_client.transactions_sync(req)
             # Add this page of results
-            added.extend(response['added'])
-            has_more = response['has_more']
+            added.extend(res['added'])
+            has_more = res['has_more']
             # Update cursor to the next cursor
-            cursor = response['next_cursor']
+            cursor = res['next_cursor']
 
 
         # updating the user's cursor position
@@ -1017,6 +1019,32 @@ def plaid_upload_new_expense(item_id: str):
 
             db.session.add(new_sub_expense)
             db.session.commit()
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@app.route("/test_plaid_webhook", methods=["POST"])
+def test_plaid_webhook():
+    try:
+        data = request.get_json()
+        if(not data or len(data) < 1):
+            raise Exception("No request body found")
+
+        print("WE HAVE RECIEVED A WEBHOOK, YIPEEEE")
+
+        user_id = data.get("user_id")
+        user = db.session.query(User).get(user_id)
+        access_token = user.plaid_access_token
+        
+        req = SandboxItemFireWebhookRequest(
+            access_token=access_token,
+            # This is the stupidest line of code to exist. Plaid should be ashamed of themselves.
+            webhook_type=WebhookType("TRANSACTIONS"),
+            webhook_code='SYNC_UPDATES_AVAILABLE'
+        )
+
+        res = plaid_client.sandbox_item_fire_webhook(req)
+        return str(res)
     except Exception as e:
         return f"Error: {e}"
 
