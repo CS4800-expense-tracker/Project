@@ -1075,13 +1075,13 @@ def create_link_token():
         
         # either the user id will be passed in, or the email of the user. Don't quite know yet
         user_id = data["user_id"]
-
+        print("Before link token req")
         # Create a link_token for the given user
         req = LinkTokenCreateRequest(
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
                 country_codes=[CountryCode('US')],
-                redirect_uri="https://pennywise.money.com/",
+                redirect_uri="https://pennywise.money/",
                 language='en',
                 webhook=webhook_url,
                 user=LinkTokenCreateRequestUser(
@@ -1091,7 +1091,7 @@ def create_link_token():
                 secret=PLAID_SECRET
             )
         res = plaid_client.link_token_create(req)
-
+        print("After link token req")
         # Send the data to the client
         return jsonify(res.to_dict())
     except Exception as e:

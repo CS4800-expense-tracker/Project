@@ -1,5 +1,19 @@
+<<<<<<< HEAD
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Text, TextInput, Pressable, Button, ScrollView } from "react-native";
+=======
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Text,
+  TextInput,
+  Pressable,
+  Button,
+  ScrollView,
+  useWindowDimensions,
+} from "react-native";
+>>>>>>> 34b258ce318f6785d40dc5d2049e562f1d27307b
 import Sidebar from "./sidebar";
 import SectionView from "./section-view";
 import Heading1 from "./heading1";
@@ -8,8 +22,10 @@ import RecentExpense from "./recent-expense";
 import { SelectList } from "react-native-dropdown-select-list";
 import AnimatedButton from "./animated-button";
 
-
 export default function Expenses() {
+  const { height, width } = useWindowDimensions();
+  const styles = makeStyles(width);
+
   const name = "John";
   const monthlyBudget = 1000;
   const spent = Math.trunc(780);
@@ -52,120 +68,118 @@ export default function Expenses() {
   }
 }
 
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignContent: "space-between",
-    height: "100%",
-    width: "100%",
-  },
-  subContainer1: {
-    width: "100%",
-    margin: 20,
-    padding: "10%",
-  backgroundColor: "#ddd",
-    borderRadius: 22,
-  },
-  expenseContainer: {
-    marginBottom: 10,
-  },
-  expenseHeader: {
-    padding: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  dropdownContent: {
-    padding: 10,
-    backgroundColor: "#ddd",
-    borderRadius: 8,
-    marginTop: 5,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  column: {
-    flex: 1,
-    marginRight: 10,
-  },
-  h2: {
-    marginLeft: "-9%",
-    marginTop: "-10%",
-  },
-  subExpenseBox: {
-    marginBottom: 5,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
-  },
-  
-  categoryBox: {
-    marginBottom: 2 ,
-
-    padding: 10,
-    borderRadius: 8,
-  },
-
-
-  input: {
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#ddd",
-    borderRadius: 8,
-  },
-
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 5,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 8,
-  },
-
-  rowColumn: {
-    flexGrow: 2,
-    flexShrink: 2,
-    flexBasis: "10%"
-  },
-
-  subExpenseColumn: {
-    width: "100%"
-  },
-
-  categoryColumn: {
-    width: "100%"
-  },
-
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "right", 
-    alignItems: "end",     
-  },
-  
-  button: {
-    width: 40,   
-    height: 40,  
-    borderRadius: 10,  
-  },
-  
-  buttonGap: {
-    width: 10,   
-  },
-  
-  subExpensesLabel: {
-      fontSize: 18,          
-      fontWeight: 'bold',    
-      color: '#333',          
-      marginBottom: 10,       
+const makeStyles = (width) =>
+  StyleSheet.create({
+    container: {
+      display: "flex",
+      flexDirection: width >= 1200 ? "row" : "column",
+      alignContent: width >= 1200 ? "space-between" : "",
+      height: "100%",
     },
-  catLabel: {
-      fontSize: 16,          
-      fontWeight: 'bold',    
-      color: '#333',          
-      marginBottom: 10,       
+    subContainer1: {
+      width: "100%",
+      margin: 20,
+      padding: "10%",
+      backgroundColor: "#ddd",
+      borderRadius: 22,
+    },
+    expenseContainer: {
+      marginBottom: 10,
+    },
+    expenseHeader: {
+      padding: 10,
+      backgroundColor: "#fff",
+      borderRadius: 8,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    dropdownContent: {
+      padding: 10,
+      backgroundColor: "#ddd",
+      borderRadius: 8,
+      marginTop: 5,
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    column: {
+      flex: 1,
+      marginRight: 10,
+    },
+    h2: {
+      marginLeft: "-9%",
+      marginTop: "-10%",
+    },
+    subExpenseBox: {
+      marginBottom: 5,
+      backgroundColor: "#fff",
+      padding: 10,
+      borderRadius: 8,
+    },
+
+    categoryBox: {
+      marginBottom: 2,
+
+      padding: 10,
+      borderRadius: 8,
+    },
+
+    input: {
+      marginBottom: 10,
+      padding: 10,
+      backgroundColor: "#ddd",
+      borderRadius: 8,
+    },
+
+    rowContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: 5,
+      backgroundColor: "#fff",
+      padding: 10,
+      borderRadius: 8,
+    },
+
+    rowColumn: {
+      flexGrow: 2,
+      flexShrink: 2,
+      flexBasis: "10%",
+    },
+
+    subExpenseColumn: {
+      width: "100%",
+    },
+
+    categoryColumn: {
+      width: "100%",
+    },
+
+    buttonContainer: {
+      flexDirection: "row",
+      justifyContent: "right",
+      alignItems: "end",
+    },
+
+    button: {
+      width: 40,
+      height: 40,
+      borderRadius: 10,
+    },
+
+    buttonGap: {
+      width: 10,
+    },
+
+    subExpensesLabel: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: "#333",
+      marginBottom: 10,
+    },
+    catLabel: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: "#333",
+      marginBottom: 10,
     },
   });
-  
