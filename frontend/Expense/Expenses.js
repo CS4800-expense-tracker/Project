@@ -19,10 +19,6 @@ import { SelectList } from "react-native-dropdown-select-list";
 import AnimatedButton from "./animated-button";
 import BodyText from "./body-text";
 
-const handlePreviousPage = () => {};
-
-const handleNextPage = () => {};
-
 export default function Expenses() {
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -302,6 +298,16 @@ export default function Expenses() {
   };
 
   if (data) {
+    const handlePreviousPage = () => {
+      if (currPage === 1) return;
+      setCurrPage(currPage - 1);
+    };
+
+    const handleNextPage = () => {
+      if (data.length < 10) return;
+      setCurrPage(currPage + 1);
+      if (!data) setCurrPage(currPage - 1);
+    };
     return (
       <View style={styles.container}>
         <Sidebar page="expenses" />
