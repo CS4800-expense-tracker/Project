@@ -226,7 +226,10 @@ export default function Sidebar(props) {
       </View>
       <View style={width >= 1200 ? "" : { display: "none" }}>
         <Link to={{ screen: "Landing" }} style={styles.tabLogo}>
-          <Image source={logoDb} style={[styles.tabLogo, { width: "100%" }]} />
+          <Image
+            source={logoDb}
+            style={[styles.tabLogo, { width: "100%", display: "flex" }]}
+          />
         </Link>
         <Link to={{ screen: "Overview" }}>
           <Pressable
@@ -381,7 +384,7 @@ const makeStyles = (width) =>
       aspectRatio: "37 / 7",
       resizeMode: "contain",
       alignSelf: "center",
-      marginBottom: 32,
+      marginBottom: 16,
     },
     tabLogoMobile: {
       height: "100%",
