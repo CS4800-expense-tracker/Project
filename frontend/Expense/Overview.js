@@ -41,6 +41,35 @@ export default function Overview({ navigation }) {
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const currentDate = new Date();
+  const month = monthNames[currentDate.getMonth()];
+  const monthNum = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
+  const [userData, setUserData] = useState({});
+
+  useEffect(() => {
+    fetch(`https://api.pennywise.money/overview/39/${monthNum}/${year}`)
+      .then((response) => response.json())
+      .then((data) => {
+        setUserData(data);
+        console.log("This is from fetch", data);
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const name = "John";
   const monthlyBudget = 1000;
@@ -87,25 +116,19 @@ export default function Overview({ navigation }) {
   const pieChartSeries = getChartSeries();
   const sliceColors = getSliceColors();
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const month = monthNames[new Date().getMonth()];
-
   function getChartSeries() {
-    if (available >= 0) return [spent, available];
-    else return [monthlyBudget, Math.abs(available)];
+    if (userData && userData.category_analysis) {
+      if (available >= 0)
+        return [
+          userData.total_spent,
+          userData.total_budget - userData.total_spent,
+        ];
+      else
+        return [
+          userData.total_budget,
+          Math.abs(userData.total_budget - userData.total_spent),
+        ];
+    }
   }
 
   function getSliceColors() {
@@ -117,132 +140,154 @@ export default function Overview({ navigation }) {
     return available >= 0 ? styles.underBudgetText : styles.overBudgetText;
   }
 
-  return (
-    <View style={styles.container}>
-      <Sidebar page="overview" />
-      <SectionView>
-        <Heading1 style={[styles.textColor, styles.h1, { marginBottom: 48 }]}>
-          Welcome, {name}
-        </Heading1>
-        <Heading2 style={[styles.textColor, styles.h2]}>
-          {month} Overview
-        </Heading2>
-        <View style={[styles.subsectionContainer]}>
-          <Heading2 style={[styles.textColor, styles.h2Small]}>Budget</Heading2>
-          <View style={[styles.budgetView]}>
-            <View style={[styles.flex, { alignItems: "center" }]}>
-              <BodyText
-                style={[getBudgetTextStyle(), styles.availableValueText]}
-              >
-                ${monthlyBudget}
-              </BodyText>
-              <View style={[styles.rowFlex]}>
-                <BodyText style={[getBudgetTextStyle()]}>budget </BodyText>
-                <BodyText style={[getBudgetTextStyle()]}>
-                  {available >= 0 ? "this month" : "exceeded"}
+  function formatDate(date) {
+    const dateSlices = date.split(" ");
+    const month =
+      monthNames.findIndex((element) => element.includes(dateSlices[2])) + 1;
+    const day = dateSlices[1];
+    const year = dateSlices[3].slice(2);
+    const formattedDate = `${month}/${day}/${year}`;
+    return formattedDate;
+  }
+
+  if (userData && userData.total_budget) {
+    console.log(userData);
+    return (
+      <View style={styles.container}>
+        <Sidebar page="overview" />
+        <SectionView>
+          <Heading1 style={[styles.textColor, styles.h1, { marginBottom: 48 }]}>
+            Welcome, {userData.user_name.split(" ")[0]}
+          </Heading1>
+          <Heading2 style={[styles.textColor, styles.h2]}>
+            {month} Overview
+          </Heading2>
+          <View style={[styles.subsectionContainer]}>
+            <Heading2 style={[styles.textColor, styles.h2Small]}>
+              Budget
+            </Heading2>
+            <View style={[styles.budgetView]}>
+              <View style={[styles.flex, { alignItems: "center" }]}>
+                <BodyText
+                  style={[getBudgetTextStyle(), styles.availableValueText]}
+                >
+                  ${userData.total_budget}
                 </BodyText>
-              </View>
-            </View>
-            <View style={styles.chart}>
-              <PieChart
-                widthAndHeight={width >= 425 ? 128 : 96}
-                series={pieChartSeries}
-                sliceColor={sliceColors}
-                style={styles.pieChart}
-              />
-              <View style={{ marginRight: 16 }}>
-                <View style={styles.chart}>
-                  <Image
-                    source={squareIcon}
-                    style={[
-                      styles.square,
-                      { tintColor: available >= 0 ? "#558033" : "#803333" },
-                    ]}
-                  />
-                  <BodyText style={[styles.textColor]}>
-                    {available >= 0 ? "Available" : "Deficit"}
-                  </BodyText>
-                </View>
-                <View style={styles.chart}>
-                  <Image
-                    source={squareIcon}
-                    style={[styles.square, { tintColor: "#BCEE51" }]}
-                  />
-                  <BodyText style={[styles.textColor]}>
-                    {available >= 0 ? "Spent" : "Budget"}
+                <View style={[styles.rowFlex]}>
+                  <BodyText style={[getBudgetTextStyle()]}>budget </BodyText>
+                  <BodyText style={[getBudgetTextStyle()]}>
+                    {available >= 0 ? "this month" : "exceeded"}
                   </BodyText>
                 </View>
               </View>
-              <View>
-                <BodyText style={[styles.textColor, styles.chartTextValue]}>
-                  ${Math.abs(available)}
-                </BodyText>
-                <BodyText style={[styles.textColor, styles.chartTextValue]}>
-                  ${available >= 0 ? spent : monthlyBudget}
-                </BodyText>
+              <View style={styles.chart}>
+                <PieChart
+                  widthAndHeight={width >= 425 ? 128 : 96}
+                  series={pieChartSeries}
+                  sliceColor={sliceColors}
+                  style={styles.pieChart}
+                />
+                <View style={{ marginRight: 16 }}>
+                  <View style={styles.chart}>
+                    <Image
+                      source={squareIcon}
+                      style={[
+                        styles.square,
+                        { tintColor: available >= 0 ? "#558033" : "#803333" },
+                      ]}
+                    />
+                    <BodyText style={[styles.textColor]}>
+                      {available >= 0 ? "Available" : "Deficit"}
+                    </BodyText>
+                  </View>
+                  <View style={styles.chart}>
+                    <Image
+                      source={squareIcon}
+                      style={[styles.square, { tintColor: "#BCEE51" }]}
+                    />
+                    <BodyText style={[styles.textColor]}>
+                      {available >= 0 ? "Spent" : "Budget"}
+                    </BodyText>
+                  </View>
+                </View>
+                <View>
+                  <BodyText style={[styles.textColor, styles.chartTextValue]}>
+                    ${Math.abs(userData.total_budget - userData.total_spent)}
+                  </BodyText>
+                  <BodyText style={[styles.textColor, styles.chartTextValue]}>
+                    $
+                    {available >= 0
+                      ? userData.total_spent
+                      : userData.total_budget}
+                  </BodyText>
+                </View>
               </View>
             </View>
           </View>
-        </View>
-        <View style={styles.subsectionContainer}>
-          <Heading2 style={[styles.textColor, styles.h2Small]}>
-            Expense Categories
-          </Heading2>
-          {expenseCategories.map((element) => (
-            <View>
-              <Heading2 style={[styles.textColor, styles.h2XSmall]}>
-                {element.expenseName}
-              </Heading2>
-              <Progress.Bar
-                progress={element.spent / element.total}
-                color={"#558033"}
-                width={null}
-                height={24}
-                borderRadius={32}
-                unfilledColor="#ccd9c2"
-                style={{ marginBottom: 8 }}
-              />
-              <BodyText style={[styles.textColor, { marginBottom: 32 }]}>
-                ${element.spent} spent out of ${element.total} total budget
-              </BodyText>
-            </View>
-          ))}
-        </View>
-        <View style={[styles.subsectionContainer, { marginBottom: 0 }]}>
-          <Heading2 style={[styles.textColor, styles.h2Small]}>
-            Recent Expenses
-          </Heading2>
-          <View style={styles.flex}>
-            <RecentExpense
-              value={recentExpensesValues[0]}
-              name={recentExpensesNames[0]}
-              date={recentExpensesDates[0]}
-            />
-            <RecentExpense
-              value={recentExpensesValues[1]}
-              name={recentExpensesNames[1]}
-              date={recentExpensesDates[1]}
-            />
-            <RecentExpense
-              value={recentExpensesValues[2]}
-              name={recentExpensesNames[2]}
-              date={recentExpensesDates[2]}
-            />
-            <RecentExpense
-              value={recentExpensesValues[3]}
-              name={recentExpensesNames[3]}
-              date={recentExpensesDates[3]}
-            />
-            <RecentExpense
-              value={recentExpensesValues[4]}
-              name={recentExpensesNames[4]}
-              date={recentExpensesDates[4]}
-            />
+          <View style={styles.subsectionContainer}>
+            <Heading2 style={[styles.textColor, styles.h2Small]}>
+              Expense Categories
+            </Heading2>
+            {userData.category_analysis.map((element) => {
+              return (
+                <View>
+                  <Heading2 style={[styles.textColor, styles.h2XSmall]}>
+                    {element.category_name}
+                  </Heading2>
+                  <Progress.Bar
+                    progress={
+                      element.total_spent_for_category / element.category_budget
+                    }
+                    color={
+                      element.total_spent_for_category /
+                        element.category_budget >
+                      1
+                        ? "#803333"
+                        : "#558033"
+                    }
+                    width={null}
+                    height={24}
+                    borderRadius={32}
+                    unfilledColor="#ccd9c2"
+                    style={{ marginBottom: 8 }}
+                  />
+                  <BodyText style={[styles.textColor, { marginBottom: 32 }]}>
+                    ${element.total_spent_for_category} spent out of $
+                    {element.category_budget} total budget
+                  </BodyText>
+                </View>
+              );
+            })}
           </View>
-        </View>
-      </SectionView>
-    </View>
-  );
+          <View style={[styles.subsectionContainer, { marginBottom: 0 }]}>
+            <Heading2 style={[styles.textColor, styles.h2Small]}>
+              Recent Expenses
+            </Heading2>
+            <View style={styles.flex}>
+              {userData.last_five_expenses.length === 0 ? (
+                <BodyText style={{ alignSelf: "center", textAlign: "center" }}>
+                  No expenses found.{`\n`}
+                  Head to the Expenses page to get started!
+                </BodyText>
+              ) : (
+                userData.last_five_expenses.map((element) => {
+                  return (
+                    <RecentExpense
+                      value={element.total_spent_for_expense}
+                      name={element.store_name}
+                      date={formatDate(element.timestamp)}
+                    />
+                  );
+                })
+              )}
+            </View>
+          </View>
+        </SectionView>
+      </View>
+    );
+  } else {
+    return <></>;
+  }
 }
 
 const makeStyles = (width) =>
