@@ -4,6 +4,7 @@
         {
             "name": "cs4800_backend",
             "image": "410130958579.dkr.ecr.us-west-1.amazonaws.com/cs4800_backend",
+            "command": ["gunicorn", "-b", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "index:app"],
             "cpu": 512,
             "memory": 512,
             "memoryReservation": 512,
