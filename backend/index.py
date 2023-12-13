@@ -597,6 +597,7 @@ def get_expenses(user_id, page_num):
                     }
                     expense_data["sub_expenses"].append(sub_expense_data)
             expense_info.append(expense_data)
+            # merge
         
         if expense_info:
             return jsonify(expense_info)
