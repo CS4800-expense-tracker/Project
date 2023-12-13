@@ -20,11 +20,13 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
-  const { state: appContext, dispatch: appDispatch } = useContext(
-    AppContext
-  );
-  const linkedBank = localStorage.getItem("isBankLinked") === "false" || localStorage.getItem("isBankLinked") === null ? false : true;
-  const user_id = localStorage.getItem("user_id")
+  const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
+  const linkedBank =
+    localStorage.getItem("isBankLinked") === "false" ||
+    localStorage.getItem("isBankLinked") === null
+      ? false
+      : true;
+  const user_id = localStorage.getItem("user_id");
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -92,7 +94,7 @@ export default function Account() {
   const onNewCategoryNameChanged = (text) => {
     let newText = "";
     let chars =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ '&(),./:-'\"";
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789 '&(),./:-'\"";
 
     for (let i = 0; i < text.length; i++) {
       if (chars.indexOf(text[i]) > -1) newText += text[i];
@@ -159,16 +161,16 @@ export default function Account() {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
-      }
+      };
       fetch("https://api.pennywise.money/create_link_token", tokenConfig)
-      .then((response) => (response.json()))
-      .then((data) => {
-        setLinkToken(data.link_token)
-        console.log("we got a token")
-      })
-      .catch((err) => {
-        console.error(err)
-      })
+        .then((response) => response.json())
+        .then((data) => {
+          setLinkToken(data.link_token);
+          console.log("we got a token");
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     };
 
     useEffect(() => {
@@ -181,8 +183,8 @@ export default function Account() {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
       const response = fetch("https://api.pennywise.money/set_access_token", {
-      // const response = fetch("http://127.0.0.1:5000/set_access_token", {
-      // const response = fetch ("https://8df1-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/set_access_token", {
+        // const response = fetch("http://127.0.0.1:5000/set_access_token", {
+        // const response = fetch ("https://8df1-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -198,17 +200,17 @@ export default function Account() {
     return (
       <div>
         <p>HEllo</p>
-      <AnimatedButton
-        bgColor={linkedBank ? "#ddd" : "#BCEE51"}
-        hoverBgColor={linkedBank ? "#803333" : "#558033"}
-        textColor={linkedBank ? "#803333" : "#384718"}
-        hoverTextColor={"#fff"}
-        text={linkedBank ? "Unlink your account" : "Link your account"}
-        buttonStyle={{ width: linkedBank ? 216 : 200 }}
-        viewStyle={styles.bankLinkButtonView}
-        onPress={() => open()}
-        disabled={!ready}
-      />
+        <AnimatedButton
+          bgColor={linkedBank ? "#ddd" : "#BCEE51"}
+          hoverBgColor={linkedBank ? "#803333" : "#558033"}
+          textColor={linkedBank ? "#803333" : "#384718"}
+          hoverTextColor={"#fff"}
+          text={linkedBank ? "Unlink your account" : "Link your account"}
+          buttonStyle={{ width: linkedBank ? 216 : 200 }}
+          viewStyle={styles.bankLinkButtonView}
+          onPress={() => open()}
+          disabled={!ready}
+        />
       </div>
     );
   };
