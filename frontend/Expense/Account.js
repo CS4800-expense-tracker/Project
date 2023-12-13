@@ -13,21 +13,39 @@ import { SelectList } from "react-native-dropdown-select-list";
 import { getH2XSmallMobileSize } from "./font-sizes";
 import { AppContext } from "./AppContext";
 
-export default function Account() {
+export default function Account({ navigation }) {
   const [budget, setBudget] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryBudget, setNewCategoryBudget] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryEdit, setSelectedCategoryEdit] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
+  const [selectedCategoryDelete, setSelectedCategoryDelete] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
-  const { state, dispatch } = useContext(
-    AppContext
-  );
-  const user_id = localStorage.getItem("userID")
-  var linkedBank = localStorage.getItem("isBankLinked")
+  const { state, dispatch } = useContext(AppContext);
+  const user_id = localStorage.getItem("userID");
+  var linkedBank = localStorage.getItem("isBankLinked");
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
+
+  const [userBudget, setUserBudget] = useState({});
+  const [userCategories, setUserCategories] = useState([]);
+  const [update, setUpdate] = useState(false);
+
+  useEffect(() => {
+    fetch(`https://api.pennywise.money/total_budget/26`)
+      .then((response) => response.json())
+      .then((data) => {
+        setUserBudget(data);
+        console.log("This is from fetch", data);
+      })
+      .catch((err) => console.error(err));
+    fetch(`https://api.pennywise.money/categories/26`)
+      .then((response) => response.json())
+      .then((data) => {
+        setUserCategories(data);
+      });
+  }, [update]);
 
   const totalBudget = 1000;
   const expenseCategories = [
@@ -55,14 +73,11 @@ export default function Account() {
 
   let selectListData = [];
   const getSelectListData = (categories) => {
+    selectListData = [];
     categories.map((element, i) => {
       selectListData.push({
-        key: element.expenseName,
-        value:
-          element.expenseName +
-          " (" +
-          Math.trunc((element.total / totalBudget) * 100) +
-          "%)",
+        key: element.name,
+        value: element.name + ` (${element.percent}%)`,
       });
     });
     return selectListData;
@@ -82,7 +97,22 @@ export default function Account() {
     if (budget.length !== 0) {
       // Insert code here to set user's new budget in backend database
       // 'budget' stores the new budget
+      const requestOptions = {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ total_budget: budget }),
+      };
+
+      fetch(`https://api.pennywise.money/total_budget/26`, requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data);
+        })
+        .catch((err) => console.error(err));
       setBudget("");
+      setTimeout(() => {
+        setUpdate(!update);
+      }, 500);
     }
   };
   const onClearMonthlyBudgetPress = () => {
@@ -115,8 +145,26 @@ export default function Account() {
       // Insert code here to set user's new category name and its budget percentage in backend database
       // 'newCategoryName' stores the new category name
       // 'newCategoryBudget' stores the category's budget percentage
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newCategoryName,
+          percent: Number(newCategoryBudget),
+        }),
+      };
+
+      fetch(`https://api.pennywise.money/category/26`, requestOptions)
+        .then((response) => response.json())
+        .then((data) => {
+          // console.log(data);
+        })
+        .catch((err) => console.error(err));
       setNewCategoryName("");
       setNewCategoryBudget("");
+      setTimeout(() => {
+        setUpdate(!update);
+      }, 500);
     }
   };
   const onClearNewCategoryPress = () => {
@@ -135,7 +183,10 @@ export default function Account() {
     setEditedCategoryBudget(newText);
   };
   const onSubmitEditedCategoryPress = () => {
-    if (selectedCategory.length !== 0 && editedCategoryBudget.length !== 0) {
+    if (
+      selectedCategoryEdit.length !== 0 &&
+      editedCategoryBudget.length !== 0
+    ) {
       // Insert code here to set user's new budget for the selected category in backend database
       // 'selectedCategory' stores the category name
       // 'editedCategoryBudget' stores the new budget for the selected category
@@ -146,11 +197,32 @@ export default function Account() {
     setEditedCategoryBudget("");
   };
 
+  const onDeleteCategory = () => {
+    const requestOptions = {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    };
+
+    fetch(
+      `https://api.pennywise.money/category/26/${selectedCategoryDelete}`,
+      requestOptions
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        // console.log(data);
+      })
+      .catch((err) => console.error(err));
+    setTimeout(() => {
+      location.reload(true);
+    }, 500);
+  };
+
   const onDeleteAccountPress = () => {
     if (deleteAccount.toLowerCase() === "delete my account") {
       setDeleteAccount("");
     }
   };
+
   const BankButton = () => {
     const [linkToken, setLinkToken] = useState();
     const generateToken = async () => {
@@ -160,14 +232,14 @@ export default function Account() {
         body: JSON.stringify({ user_id: user_id }),
       };
       fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
-      // fetch("https://api.pennywise.money/create_link_token", tokenConfig)
-      .then((response) => (response.json()))
-      .then((data) => {
-        setLinkToken(data.link_token)
-      })
-      .catch((err) => {
-        console.error(err)
-      })
+        // fetch("https://api.pennywise.money/create_link_token", tokenConfig)
+        .then((response) => response.json())
+        .then((data) => {
+          setLinkToken(data.link_token);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     };
 
     useEffect(() => {
@@ -180,14 +252,14 @@ export default function Account() {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
       // const response = fetch("https://api.pennywise.money/set_access_token", {
-        const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      const response = fetch("http://127.0.0.1:5000/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ public_token: public_token, user_id: user_id }),
       });
-      localStorage.setItem("isBankLinked", true)
+      localStorage.setItem("isBankLinked", true);
     }, []);
     const config = {
       token: props.linkToken,
@@ -209,268 +281,324 @@ export default function Account() {
     );
   };
 
-  return (
-    <View style={styles.container}>
-      <Sidebar page="account" />
-      <SectionView alignItems={width >= 1200 ? "" : "center"}>
-        <Heading1 style={[styles.bottomMarginLarge, styles.mobileCenter]}>
-          Account Settings
-        </Heading1>
-        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
-          Update your monthly budget
-        </Heading2>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          Current budget
-        </Heading2>
-        <BodyText style={[styles.input, styles.bottomMarginSmall]}>
-          ${totalBudget}
-        </BodyText>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          New budget
-        </Heading2>
-        <TextInput
-          keyboardType="numeric"
-          onChangeText={(text) => onMonthlyBudgetChanged(text)}
-          value={budget}
-          placeholder="Whole number (e.g. 2250)"
-          placeholderTextColor="#888"
-          maxLength={6}
-          style={[bodyTextStyle(), styles.bottomMarginSmall, styles.input]}
-        />
-        <View style={[styles.flexRow, styles.bottomMarginLarge]}>
-          <AnimatedButton
-            bgColor={"#BCEE51"}
-            hoverBgColor={"#558033"}
-            textColor={"#384718"}
-            hoverTextColor={"#fff"}
-            text={"Submit"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onSubmitMonthlyBudgetPress}
+  if (userBudget && userCategories) {
+    return (
+      <View style={styles.container}>
+        <Sidebar page="account" />
+        <SectionView alignItems={width >= 1200 ? "" : "center"}>
+          <Heading1 style={[styles.bottomMarginLarge, styles.mobileCenter]}>
+            Account Settings
+          </Heading1>
+          <Heading2
+            style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}
+          >
+            Update your monthly budget
+          </Heading2>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Current budget
+          </Heading2>
+          <BodyText style={[styles.input, styles.bottomMarginSmall]}>
+            ${userBudget.totalBudget}
+          </BodyText>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            New budget
+          </Heading2>
+          <TextInput
+            keyboardType="numeric"
+            onChangeText={(text) => onMonthlyBudgetChanged(text)}
+            value={budget}
+            placeholder="Whole number (e.g. 2250)"
+            placeholderTextColor="#888"
+            maxLength={6}
+            style={[bodyTextStyle(), styles.bottomMarginSmall, styles.input]}
           />
+          <View style={[styles.flexRow, styles.bottomMarginLarge]}>
+            <AnimatedButton
+              bgColor={"#BCEE51"}
+              hoverBgColor={"#558033"}
+              textColor={"#384718"}
+              hoverTextColor={"#fff"}
+              text={"Submit"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onSubmitMonthlyBudgetPress}
+            />
+            <AnimatedButton
+              bgColor={"#ddd"}
+              hoverBgColor={"#333"}
+              textColor={"#333"}
+              hoverTextColor={"#fff"}
+              text={"Clear"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onClearMonthlyBudgetPress}
+            />
+          </View>
+          <Heading2
+            style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}
+          >
+            Create a new expense category
+          </Heading2>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Category name
+          </Heading2>
+          <TextInput
+            keyboardType="default"
+            onChangeText={(text) => onNewCategoryNameChanged(text)}
+            value={newCategoryName}
+            placeholder="Groceries"
+            placeholderTextColor="#888"
+            maxLength={100}
+            style={[bodyTextStyle(), styles.bottomMarginSmall, styles.input]}
+          />
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Category budget
+          </Heading2>
+          <TextInput
+            keyboardType="numeric"
+            onChangeText={(text) => onNewCategoryBudgetChanged(text)}
+            value={newCategoryBudget}
+            placeholder="Percent (e.g. 20)"
+            placeholderTextColor="#888"
+            maxLength={2}
+            style={[bodyTextStyle(), styles.input]}
+          />
+          <BodyText
+            style={[
+              styles.bottomMarginXSmall,
+              styles.mobileCenter,
+              styles.subText,
+            ]}
+          >
+            This is a percentage of your monthly budget.
+          </BodyText>
+          <View style={[styles.flexRow, styles.bottomMarginLarge]}>
+            <AnimatedButton
+              bgColor={"#BCEE51"}
+              hoverBgColor={"#558033"}
+              textColor={"#384718"}
+              hoverTextColor={"#fff"}
+              text={"Submit"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onSubmitNewCategoryPress}
+            />
+            <AnimatedButton
+              bgColor={"#ddd"}
+              hoverBgColor={"#333"}
+              textColor={"#333"}
+              hoverTextColor={"#fff"}
+              text={"Clear"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onClearNewCategoryPress}
+            />
+          </View>
+          <Heading2
+            style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}
+          >
+            Edit an expense category
+          </Heading2>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Category name
+          </Heading2>
+          <View style={{ width: "100%" }}>
+            <SelectList
+              setSelected={(val) => setSelectedCategoryEdit(val)}
+              data={getSelectListData(userCategories)}
+              save="key"
+              search={false}
+              boxStyles={[styles.dropdown, { alignItems: "center" }]}
+              dropdownStyles={styles.dropdown}
+              inputStyles={bodyTextStyle()}
+              dropdownTextStyles={bodyTextStyle()}
+            />
+          </View>
+          <View style={styles.bottomMarginSmall}></View>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            New budget
+          </Heading2>
+          <TextInput
+            keyboardType="numeric"
+            onChangeText={(text) => onEditCategoryBudgetChanged(text)}
+            value={editedCategoryBudget}
+            placeholder="Percent (e.g. 45)"
+            placeholderTextColor="#888"
+            maxLength={2}
+            style={[bodyTextStyle(), styles.input]}
+          />
+          <BodyText
+            style={[
+              styles.bottomMarginXSmall,
+              styles.mobileCenter,
+              styles.subText,
+            ]}
+          >
+            This is a percentage of your monthly budget.
+          </BodyText>
+          <View style={[styles.flexRow, styles.bottomMarginLarge]}>
+            <AnimatedButton
+              bgColor={"#BCEE51"}
+              hoverBgColor={"#558033"}
+              textColor={"#384718"}
+              hoverTextColor={"#fff"}
+              text={"Submit"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onSubmitEditedCategoryPress}
+            />
+            <AnimatedButton
+              bgColor={"#ddd"}
+              hoverBgColor={"#333"}
+              textColor={"#333"}
+              hoverTextColor={"#fff"}
+              text={"Clear"}
+              buttonStyle={[styles.budgetButton]}
+              viewStyle={styles.budgetButtonView}
+              onPress={onClearEditedCategoryPress}
+            />
+          </View>
+          <Heading2
+            style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}
+          >
+            Delete an expense category
+          </Heading2>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Category name
+          </Heading2>
+          <View style={[styles.bottomMarginXSmall, { width: "100%" }]}>
+            <SelectList
+              setSelected={(val) => setSelectedCategoryDelete(val)}
+              data={getSelectListData(userCategories)}
+              save="key"
+              search={false}
+              boxStyles={[styles.dropdown, { alignItems: "center" }]}
+              dropdownStyles={styles.dropdown}
+              inputStyles={bodyTextStyle()}
+              dropdownTextStyles={bodyTextStyle()}
+            />
+          </View>
+          <BodyText
+            style={[
+              styles.bottomMarginXSmall,
+              styles.mobileCenter,
+              styles.subText,
+            ]}
+          >
+            Deleting a category will also delete all sub expenses associated
+            with the category.
+          </BodyText>
           <AnimatedButton
             bgColor={"#ddd"}
-            hoverBgColor={"#333"}
-            textColor={"#333"}
+            hoverBgColor={"#803333"}
+            textColor={"#803333"}
             hoverTextColor={"#fff"}
-            text={"Clear"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onClearMonthlyBudgetPress}
+            text={"Delete category"}
+            buttonStyle={{ width: "max-content" }}
+            viewStyle={[styles.bankLinkButtonView, styles.bottomMarginLarge]}
+            onPress={onDeleteCategory}
           />
-        </View>
-        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
-          Create a new expense category
-        </Heading2>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          Category name
-        </Heading2>
-        <TextInput
-          keyboardType="default"
-          onChangeText={(text) => onNewCategoryNameChanged(text)}
-          value={newCategoryName}
-          placeholder="Groceries"
-          placeholderTextColor="#888"
-          maxLength={100}
-          style={[bodyTextStyle(), styles.bottomMarginSmall, styles.input]}
-        />
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          Category budget
-        </Heading2>
-        <TextInput
-          keyboardType="numeric"
-          onChangeText={(text) => onNewCategoryBudgetChanged(text)}
-          value={newCategoryBudget}
-          placeholder="Percent (e.g. 20)"
-          placeholderTextColor="#888"
-          maxLength={2}
-          style={[bodyTextStyle(), styles.input]}
-        />
-        <BodyText
-          style={[
-            styles.bottomMarginXSmall,
-            styles.mobileCenter,
-            styles.subText,
-          ]}
-        >
-          This is a percentage of your monthly budget.
-        </BodyText>
-        <View style={[styles.flexRow, styles.bottomMarginLarge]}>
-          <AnimatedButton
-            bgColor={"#BCEE51"}
-            hoverBgColor={"#558033"}
-            textColor={"#384718"}
-            hoverTextColor={"#fff"}
-            text={"Submit"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onSubmitNewCategoryPress}
+          <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+            Link your bank account
+          </Heading2>
+          <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+            You {linkedBank ? "already" : "do not currently"} have a bank
+            account connected with PennyWise
+          </BodyText>
+          <BankButton />
+          <View style={styles.bottomMarginLarge}></View>
+          <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+            Delete your account
+          </Heading2>
+          <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
+            Delete your account, including all data associated with it. This is
+            NOT reversible.
+          </BodyText>
+          <Heading2
+            style={[
+              styles.bottomMarginXSmall,
+              styles.h2XSmall,
+              styles.mobileCenter,
+            ]}
+          >
+            Confirm deletion
+          </Heading2>
+          <TextInput
+            keyboardType="default"
+            onChangeText={(text) => setDeleteAccount(text)}
+            value={deleteAccount}
+            placeholder="Delete my account"
+            placeholderTextColor="#888"
+            maxLength={17}
+            style={[bodyTextStyle(), styles.input]}
           />
+          <BodyText
+            style={[
+              styles.bottomMarginXSmall,
+              styles.mobileCenter,
+              styles.subText,
+            ]}
+          >
+            Type "Delete my account" to confirm account deletion.
+          </BodyText>
           <AnimatedButton
             bgColor={"#ddd"}
-            hoverBgColor={"#333"}
-            textColor={"#333"}
+            hoverBgColor={"#803333"}
+            textColor={"#803333"}
             hoverTextColor={"#fff"}
-            text={"Clear"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onClearNewCategoryPress}
+            text={"Delete your account"}
+            buttonStyle={{ width: "max-content" }}
+            viewStyle={styles.bankLinkButtonView}
+            onPress={onDeleteAccountPress}
           />
-        </View>
-        <Heading2 style={[styles.bottomMarginMediumSmall, styles.mobileCenter]}>
-          Edit an expense category
-        </Heading2>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          Category name
-        </Heading2>
-        <View style={{ width: "100%" }}>
-          <SelectList
-            setSelected={(val) => setSelectedCategory(val)}
-            data={getSelectListData(expenseCategories)}
-            save="key"
-            search={false}
-            boxStyles={[styles.dropdown, { alignItems: "center" }]}
-            dropdownStyles={styles.dropdown}
-            inputStyles={bodyTextStyle()}
-            dropdownTextStyles={bodyTextStyle()}
-          />
-        </View>
-        <View style={styles.bottomMarginSmall}></View>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          New budget
-        </Heading2>
-        <TextInput
-          keyboardType="numeric"
-          onChangeText={(text) => onEditCategoryBudgetChanged(text)}
-          value={editedCategoryBudget}
-          placeholder="Percent (e.g. 45)"
-          placeholderTextColor="#888"
-          maxLength={2}
-          style={[bodyTextStyle(), styles.input]}
-        />
-        <BodyText
-          style={[
-            styles.bottomMarginXSmall,
-            styles.mobileCenter,
-            styles.subText,
-          ]}
-        >
-          This is a percentage of your monthly budget.
-        </BodyText>
-        <View style={[styles.flexRow, styles.bottomMarginLarge]}>
-          <AnimatedButton
-            bgColor={"#BCEE51"}
-            hoverBgColor={"#558033"}
-            textColor={"#384718"}
-            hoverTextColor={"#fff"}
-            text={"Submit"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onSubmitEditedCategoryPress}
-          />
-          <AnimatedButton
-            bgColor={"#ddd"}
-            hoverBgColor={"#333"}
-            textColor={"#333"}
-            hoverTextColor={"#fff"}
-            text={"Clear"}
-            buttonStyle={[styles.budgetButton]}
-            viewStyle={styles.budgetButtonView}
-            onPress={onClearEditedCategoryPress}
-          />
-        </View>
-        <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
-          Link your bank account
-        </Heading2>
-        <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
-          You {linkedBank ? "already" : "do not currently"} have a bank account
-          connected with PennyWise
-        </BodyText>
-        <BankButton />
-        <View style={styles.bottomMarginLarge}></View>
-        <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
-          Delete your account
-        </Heading2>
-        <BodyText style={[styles.bottomMarginSmall, styles.mobileCenter]}>
-          Delete your account, including all data associated with it. This is
-          NOT reversible.
-        </BodyText>
-        <Heading2
-          style={[
-            styles.bottomMarginXSmall,
-            styles.h2XSmall,
-            styles.mobileCenter,
-          ]}
-        >
-          Confirm deletion
-        </Heading2>
-        <TextInput
-          keyboardType="default"
-          onChangeText={(text) => setDeleteAccount(text)}
-          value={deleteAccount}
-          placeholder="Delete my account"
-          placeholderTextColor="#888"
-          maxLength={17}
-          style={[bodyTextStyle(), styles.input]}
-        />
-        <BodyText
-          style={[
-            styles.bottomMarginXSmall,
-            styles.mobileCenter,
-            styles.subText,
-          ]}
-        >
-          Type "Delete my account" to confirm account deletion.
-        </BodyText>
-        <AnimatedButton
-          bgColor={"#ddd"}
-          hoverBgColor={"#803333"}
-          textColor={"#803333"}
-          hoverTextColor={"#fff"}
-          text={"Delete your account"}
-          buttonStyle={{ width: "max-content" }}
-          viewStyle={styles.bankLinkButtonView}
-          onPress={onDeleteAccountPress}
-        />
-      </SectionView>
-    </View>
-  );
+        </SectionView>
+      </View>
+    );
+  } else {
+    return <></>;
+  }
 }
 
 const makeStyles = (width) =>
