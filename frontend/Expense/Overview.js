@@ -30,9 +30,7 @@ export default function Overview({ navigation }) {
   // If no link, then have notification over the thingy
   // If no user id, send to sign up or log in
 
-  const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
-
-  const user_id = localStorage.getItem("userID")
+  const user_id = localStorage.getItem("userID");
   if (!user_id) {
     navigation.navigate("Signup");
   }
