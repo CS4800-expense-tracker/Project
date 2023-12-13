@@ -17,6 +17,9 @@ import React from "react";
 export default function Landing() {
   const heroImage = require("./img/hero_image.png");
   const tempImage = require("./img/placeholder.png");
+  const overviewImage = require("./img/overview.png");
+  // const expensesImage = require("./img/expenses.png")
+  const accountImage = require("./img/account.png");
   const logoLb = require("./img/PennyWise_Logo_Lb.png");
   const logoDb = require("./img/PennyWise_Logo_Db.png");
   const menu = require("./img/menu.svg");
@@ -27,6 +30,9 @@ export default function Landing() {
   const useSmallText = width >= 950 ? false : true;
 
   const [displayMenu, setDisplayMenu] = React.useState(false);
+
+  localStorage.setItem("userID", -1);
+  localStorage.setItem("isBankLinked", false);
 
   return (
     <View style={styles.container}>
@@ -60,7 +66,9 @@ export default function Landing() {
       <View
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
-        <Image source={logoLb} style={styles.logo} />
+        <Link to={{ screen: "Landing" }} style={styles.logo}>
+          <Image source={logoLb} style={styles.logo} />
+        </Link>
         <Link to={{ screen: "Login" }}>
           <AnimatedButton
             bgColor={"#384718"}
@@ -181,7 +189,7 @@ export default function Landing() {
           breeze.
         </BodyText>
         <View style={styles.shadow}>
-          <Image source={tempImage} style={styles.featureImages} />
+          <Image source={overviewImage} style={styles.featureImages} />
         </View>
       </View>
       <View
@@ -223,7 +231,7 @@ export default function Landing() {
           trends, and make informed decisions about your financial future.
         </BodyText>
         <View style={styles.shadow}>
-          <Image source={tempImage} style={styles.featureImages} />
+          <Image source={overviewImage} style={styles.featureImages} />
         </View>
       </View>
       <View
@@ -264,7 +272,7 @@ export default function Landing() {
           All of these great features at no cost to you.
         </BodyText>
         <View style={styles.shadow}>
-          <Image source={tempImage} style={[styles.featureImages]} />
+          <Image source={accountImage} style={[styles.featureImages]} />
         </View>
       </View>
       <View
@@ -310,7 +318,9 @@ export default function Landing() {
             width < 600 ? { justifyContent: "center" } : "",
           ]}
         >
-          <Image source={logoDb} style={styles.logo} />
+          <Link to={{ screen: "Landing" }} style={styles.logo}>
+            <Image source={logoDb} style={styles.logo} />
+          </Link>
           <Link to={{ screen: "Login" }}>
             <AnimatedButton
               bgColor={"#F2FCDC"}
@@ -488,7 +498,7 @@ const makeStyles = (width) =>
       width: getFeatureImageWidth(width),
       maxWidth: 1100,
       height: undefined,
-      aspectRatio: "16 / 9",
+      aspectRatio: "256 / 135",
       resizeMode: "contain",
       borderRadius: 32,
     },

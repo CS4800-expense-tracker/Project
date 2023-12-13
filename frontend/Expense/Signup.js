@@ -74,6 +74,29 @@ export default function Signup({ navigation }) {
       [name]: value,
     });
   }
+
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [textBodyWidth, setTextBodyWidth] = useState(18);
+
+  const handleResize = () => {
+    setWindowWidth(window.innerWidth);
+  };
+
+  useEffect(() => {
+    window.addEventListener('resize', handleResize);
+
+    if (windowWidth >= 950) setTextBodyWidth(18);
+    else if (windowWidth >= 600) setTextBodyWidth(16);
+    else setTextBodyWidth(14);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+
+
+
   const [startSignup, setStartSignup] = useState(false);
   const [responseData, setResponseData] = useState(null);
   const { state: appContext, dispatch: appDispatch } = useContext(AppContext);
@@ -140,7 +163,8 @@ export default function Signup({ navigation }) {
         body: JSON.stringify(formData),
       };
 
-      fetch("http://127.0.0.1:5000/signup", requestOptions)
+      // fetch("http://127.0.0.1:5000/signup", requestOptions)
+      fetch("https://api.pennywise.money/signup", requestOptions)
         .then((response) => response.json())
         .then((data) => {
           if (data && "error" in data) {
@@ -154,7 +178,7 @@ export default function Signup({ navigation }) {
           } else {
             // If we have no error, we just navigate to account overview and we set the user id to context
             if (data) {
-              appDispatch({ type: "setUserID", value: data.user_id });
+              localStorage.setItem("userID", data.user_id)
               navigation.navigate("Overview");
               return;
             } else {
@@ -265,7 +289,7 @@ export default function Signup({ navigation }) {
                 returnKeyType="go"
                 style={[
                   styles.categoryNameInput,
-                  bodyTextStyle(),
+                  styles.textBody,
                   styles.bottomMarginSmall,
                   styles.textColor,
                 ]}
@@ -286,7 +310,7 @@ export default function Signup({ navigation }) {
                 returnKeyType="go"
                 style={[
                   styles.categoryAmountInput,
-                  bodyTextStyle(),
+                  styles.textBody,
                   styles.bottomMarginSmall,
                   styles.textColor,
                 ]}
@@ -385,6 +409,12 @@ export default function Signup({ navigation }) {
       </View>
     </View>
   );
+}
+
+function getTextBodyWidth(windowWidth) {
+  if (windowWidth >= 950) return 18;
+  else if (windowWidth >= 600) return 16;
+  else return 14;
 }
 
 const makeStyles = (width) =>
@@ -494,4 +524,11 @@ const makeStyles = (width) =>
       padding: 8,
       marginTop: 8,
     },
+    textBody: {
+      fontFamily: "Rubik_400Regular",
+      fontSize: getTextBodyWidth(width),
+      letterSpacing: 0.5,
+      lineHeight: "2",
+    }, 
   });
+

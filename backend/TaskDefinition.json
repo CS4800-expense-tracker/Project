@@ -4,6 +4,7 @@
         {
             "name": "cs4800_backend",
             "image": "410130958579.dkr.ecr.us-west-1.amazonaws.com/cs4800_backend",
+            "command": ["gunicorn", "-b", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "debug", "index:app"],
             "cpu": 512,
             "memory": 512,
             "memoryReservation": 512,
@@ -63,12 +64,23 @@
                     "name": "SQLALCHEMY_DATABASE_URI",
                     "valueFrom": "arn:aws:secretsmanager:us-west-1:410130958579:secret:CS4800Secret-atmWs1:SQLALCHEMY_DATABASE_URI::"
                 }
-            ]
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/CS4800",
+                    "awslogs-region": "us-west-1",
+                    "awslogs-stream-prefix": "ecs",
+                    "mode": "non-blocking",
+                    "max-buffer-size": "20m"
+                }
+            }
         }
     ],
     "family": "CS4800",
     "executionRoleArn": "arn:aws:iam::410130958579:role/CS4800ECSTaskExecutionRole",
-    "networkMode": "host",
+    "networkMode": "awsvpc",
     "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
@@ -93,8 +105,8 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "1024",
-    "memory": "1024",
+    "cpu": "1000",
+    "memory": "1000",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"

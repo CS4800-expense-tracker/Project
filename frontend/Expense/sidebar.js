@@ -113,7 +113,9 @@ export default function Sidebar(props) {
       <View
         style={[styles.mobileHeader, displayMenu ? { marginBottom: 16 } : ""]}
       >
-        <Image source={logoDb} style={styles.tabLogoMobile} />
+        <Link to={{ screen: "Landing" }} style={styles.tabLogoMobile}>
+          <Image source={logoDb} style={styles.tabLogoMobile} />
+        </Link>
         <Pressable onPress={() => setDisplayMenu(!displayMenu)}>
           <Image source={displayMenu ? close : menu} style={styles.menuIcon} />
         </Pressable>
@@ -150,6 +152,7 @@ export default function Sidebar(props) {
             </Text>
           </AnimatedPressable>
         </Link>
+
         <Link to={{ screen: "Expenses" }} style={styles.mobileLink}>
           <AnimatedPressable
             onMouseEnter={expensesHoverIn}
@@ -222,7 +225,12 @@ export default function Sidebar(props) {
         </Link>
       </View>
       <View style={width >= 1200 ? "" : { display: "none" }}>
-        <Image source={logoDb} style={styles.tabLogo} />
+        <Link to={{ screen: "Landing" }} style={styles.tabLogo}>
+          <Image
+            source={logoDb}
+            style={[styles.tabLogo, { width: "100%", display: "flex" }]}
+          />
+        </Link>
         <Link to={{ screen: "Overview" }}>
           <Pressable
             onMouseEnter={overviewHoverIn}
@@ -376,7 +384,7 @@ const makeStyles = (width) =>
       aspectRatio: "37 / 7",
       resizeMode: "contain",
       alignSelf: "center",
-      marginBottom: 32,
+      marginBottom: 16,
     },
     tabLogoMobile: {
       height: "100%",

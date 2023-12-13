@@ -17,9 +17,11 @@ import threading
 
 import plaid
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
+from plaid.model.webhook_type import WebhookType
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
+from plaid.model.sandbox_item_fire_webhook_request import SandboxItemFireWebhookRequest
 from plaid.model.products import Products
 from plaid.model.country_code import CountryCode
 from plaid.api import plaid_api
@@ -37,9 +39,8 @@ app.secret_key = env.get("APP_SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = env.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
-client = OpenAI()
+open_api_client = OpenAI()
 bcrypt = Bcrypt(app) 
 
 
@@ -48,7 +49,8 @@ PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
 PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
-webhook_url = 'http://127.0.0.1:5000/recieve_plaid_webhook'
+webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
+# webhook_url = 'https://nine-drinks-vanish.loca.lt/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -59,6 +61,8 @@ if PLAID_ENV == 'sandbox':
 if PLAID_ENV == 'development':
     host = plaid.Environment.Development
     PLAID_SECRET = env.get("PLAID_DEVELOPMENT_SECRET")
+
+print(PLAID_SECRET)
 
 configuration = plaid.Configuration(
     host=host,
@@ -71,16 +75,6 @@ configuration = plaid.Configuration(
 
 api_client = plaid.ApiClient(configuration)
 plaid_client = plaid_api.PlaidApi(api_client)
-
-oauth.register(
-    "auth0",
-    client_id=env.get("AUTH0_CLIENT_ID"),
-    client_secret=env.get("AUTH0_CLIENT_SECRET"),
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-    server_metadata_url=f'https://{env.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
-)
 
 """ CREATING TABLES """
 
@@ -144,11 +138,6 @@ class SubExpense(db.Model):
 
 
 """             STARTING ROUTES SECTION          """
-# @app.before_request
-# def basic_authentication():
-#     if request.method.lower() == 'options':
-#         return Response()
-
 @app.route("/")
 def home():
     """
@@ -163,7 +152,7 @@ def home():
     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
     Cause for a big table this will take up a LOT of memory  
     """    
-    return "Hello World"
+    return "World"
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -186,7 +175,10 @@ def login():
 
         if(is_valid):
             sending_dict = {}
-            if(curr_user[0].plaid_access_token is not None):
+            print(curr_user[0])
+            if(not curr_user[0].plaid_access_token): 
+                sending_dict["has_plaid_token"] = False
+            else:
                 sending_dict["has_plaid_token"] = True
             sending_dict["user_id"] = curr_user[0].user_id
             return jsonify(sending_dict)
@@ -936,7 +928,7 @@ def categorize(expense_name, user_id):
     # timestamp must be within this month
     category_arr = db.session.query(Category.name, Category.category_id).filter(Category.user_id == user_id).all()
 
-    completion = client.chat.completions.create(
+    completion = open_api_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a wonderful AI machine that determines what category of purchase some given purchase name falls into. You can choose from the list of categories that the user provides as an array. This array will contain a list of tuples, with the structure (name, id). The user will then send a purchase name, and you must deduce what category it best falls under based on the list given in the first line of the message. Choose the category that best fits this purchase, and only return the id that corresponds to this name. You should ONLY return the id, do not return any other information."},
@@ -948,13 +940,17 @@ def categorize(expense_name, user_id):
 
 def plaid_upload_new_expense(item_id: str):
     try:
-        result = db.session.query(User).filter(User.item_id == item_id).all() 
+        result = db.session.query(User).filter(User.plaid_item_id == item_id).all() 
         if(result == [] or result is None):
             raise Exception("User not found in db")
         user = result[0]
 
         cursor = user.cursor
-        user_access_token = user.access_token
+        if(cursor is None):
+            cursor = ""
+        else: 
+            cursor = str(user.cursor)
+        user_access_token = user.plaid_access_token
         user_id = user.user_id
         # New transaction updates since "cursor"
         added = []
@@ -963,16 +959,16 @@ def plaid_upload_new_expense(item_id: str):
         has_more = True
         # Iterate through each page of new transaction updates for item
         while has_more:
-            request = TransactionsSyncRequest(
+            req = TransactionsSyncRequest(
                 access_token=user_access_token,
                 cursor=cursor,
             )
-            response = plaid_client.transactions_sync(request)
+            res = plaid_client.transactions_sync(req)
             # Add this page of results
-            added.extend(response['added'])
-            has_more = response['has_more']
+            added.extend(res['added'])
+            has_more = res['has_more']
             # Update cursor to the next cursor
-            cursor = response['next_cursor']
+            cursor = res['next_cursor']
 
 
         # updating the user's cursor position
@@ -983,6 +979,8 @@ def plaid_upload_new_expense(item_id: str):
         for item in added:
             total_spent = item["amount"]
             timestamp = item["datetime"]
+            if (not timestamp):
+                timestamp = datetime.datetime.now()
             store_name = item["merchant_name"]
             category_id = categorize(store_name, user_id)
 
@@ -1004,6 +1002,34 @@ def plaid_upload_new_expense(item_id: str):
 
             db.session.add(new_sub_expense)
             db.session.commit()
+
+        return "done"
+    except Exception as e:
+        return f"Error: {e}"
+
+
+@app.route("/test_plaid_webhook", methods=["POST"])
+def test_plaid_webhook():
+    try:
+        data = request.get_json()
+        if(not data or len(data) < 1):
+            raise Exception("No request body found")
+
+        print("WE HAVE RECIEVED A WEBHOOK, YIPEEEE")
+
+        user_id = data.get("user_id")
+        user = db.session.query(User).get(user_id)
+        access_token = user.plaid_access_token
+        
+        req = SandboxItemFireWebhookRequest(
+            access_token=access_token,
+            # This is the stupidest line of code to exist. Plaid should be ashamed of themselves.
+            # webhook_type=WebhookType("TRANSACTIONS"),
+            webhook_code='SYNC_UPDATES_AVAILABLE'
+        )
+
+        res = plaid_client.sandbox_item_fire_webhook(req)
+        return str(res)
     except Exception as e:
         return f"Error: {e}"
 
@@ -1014,7 +1040,8 @@ def recieve_plaid_webhook():
     try:
         data = request.get_json()
         if(not data or len(data) < 1):
-            raise Exception("No requesty body found")
+            raise Exception("No request body found")
+
         
         product = data['webhook_type']
         code = data['webhook_code']
@@ -1022,7 +1049,14 @@ def recieve_plaid_webhook():
 
         if (product == "TRANSACTIONS"):
             if (code == "SYNC_UPDATES_AVAILABLE"):
-                plaid_upload_new_expense(item_id)
+                print("sync update")
+                test = plaid_upload_new_expense(item_id)
+            elif (code == "INITIAL_UPDATE"):
+                print("initial update")
+                # test = plaid_upload_new_expense(item_id)
+            elif (code == "HISTORICAL_UPDATE"):
+                print("historical update")
+                # test = plaid_upload_new_expense(item_id)
             else:
                 # not raising an exception because I think then the webhook would keep on refiring
                 # which is very annoying (you NEED to send a status code of 200 within 10 seconds or it'll resend)
@@ -1030,6 +1064,7 @@ def recieve_plaid_webhook():
         else:
             print("Unknown webhook product sent")
 
+        print("WE out the switchs statement")
         return {"status": "recieved :D"}
     except Exception as e:
         return f"Error: {e}"
@@ -1047,28 +1082,30 @@ def create_link_token():
         
         # either the user id will be passed in, or the email of the user. Don't quite know yet
         user_id = data["user_id"]
-
         # Create a link_token for the given user
+        print("we before link token craete request")
         req = LinkTokenCreateRequest(
-                user=LinkTokenCreateRequestUser(
-                    client_user_id=str(user_id),
-                ),
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
                 country_codes=[CountryCode('US')],
-                redirect_uri="http://localhost:5000/callback",
+                redirect_uri="https://pennywise.money/",
                 language='en',
-                # For now, webhook is left blank. We will fix that in a little
                 webhook=webhook_url,
+                user=LinkTokenCreateRequestUser(
+                    client_user_id=str(user_id),
+                ),
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
-        response = plaid_client.link_token_create(req)
-
+        print(req)
+        res = plaid_client.link_token_create(req)
+        print(res)
         # Send the data to the client
-        return jsonify(response.to_dict())
+        print("we after link token craete request")
+        return jsonify(res.to_dict())
     except Exception as e:
-        return f"Error: {e}"
+        print(f"error: {e}")
+        return jsonify({ "error" : f"Error: {e}" })
 
 def save_access_token_and_item_id_in_user_row(access_token: str, item_id: str, user_id: int):
     # Thie method will just take in a user id and set the access token 
@@ -1100,6 +1137,7 @@ def exchange_public_token():
         response = plaid_client.item_public_token_exchange(req)
         access_token = response['access_token']
         item_id = response['item_id']
+        plaid_upload_new_expense(item_id)
         save_access_token_and_item_id_in_user_row(access_token, item_id, user_id)
         # whenever we perform anything with plaid API, we need to ask for the user id
         # so that we can also get that user's access key
@@ -1149,7 +1187,7 @@ def add_monthly_budget_categories():
     print("Monthly budgets and categories added successfully.")
 
 # Schedule the job to run at the start of every month
-schedule.every().day.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+# schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
 
 # # Run the scheduler in an infinite loop
 # while True:
