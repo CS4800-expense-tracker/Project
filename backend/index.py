@@ -1077,6 +1077,7 @@ def create_link_token():
         # either the user id will be passed in, or the email of the user. Don't quite know yet
         user_id = data["user_id"]
         # Create a link_token for the given user
+        print("we before link token craete request")
         req = LinkTokenCreateRequest(
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
@@ -1092,8 +1093,10 @@ def create_link_token():
             )
         res = plaid_client.link_token_create(req)
         # Send the data to the client
+        print("we after link token craete request")
         return jsonify(res.to_dict())
     except Exception as e:
+        print(f"error: {e}")
         return jsonify({ "error" : f"Error: {e}" })
 
 def save_access_token_and_item_id_in_user_row(access_token: str, item_id: str, user_id: int):
