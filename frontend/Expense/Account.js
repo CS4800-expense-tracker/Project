@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { StyleSheet, TextInput, View, useWindowDimensions } from "react-native";
 import { usePlaidLink } from "react-plaid-link";
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
@@ -11,6 +11,7 @@ import BodyText, { bodyTextStyle } from "./body-text";
 import AnimatedButton from "./animated-button";
 import { SelectList } from "react-native-dropdown-select-list";
 import { getH2XSmallMobileSize } from "./font-sizes";
+import { AppContext } from "./AppContext";
 
 export default function Account() {
   const [budget, setBudget] = useState("");
@@ -19,9 +20,11 @@ export default function Account() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [editedCategoryBudget, setEditedCategoryBudget] = useState("");
   const [deleteAccount, setDeleteAccount] = useState("");
-  const linkedBank = false;
-  // assuming we pull this in from a context
-  const user_id = 1;
+  const { state: appContext, dispatch: appDispatch } = useContext(
+    AppContext
+  );
+  const linkedBank = localStorage.getItem("isBankLinked") === "false" || localStorage.getItem("isBankLinked") === null ? false : true;
+  const user_id = localStorage.getItem("user_id")
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -149,42 +152,43 @@ export default function Account() {
     }
   };
   const BankButton = () => {
-    const [linkToken, setLinkToken] = useState(null);
+    const [linkToken, setLinkToken] = useState();
     const generateToken = async () => {
-      const response = await fetch("http://127.0.0.1:5000/create_link_token", {
+      // const response = await fetch ("http://127.0.0.1:5000/create_link_token", {
+      const tokenConfig = {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
-      });
-      const data = await response.json();
-      if (data) {
-        setLinkToken(data.link_token);
       }
+      fetch("https://api.pennywise.money/create_link_token", tokenConfig)
+      .then((response) => (response.json()))
+      .then((data) => {
+        setLinkToken(data.link_token)
+        console.log("we got a token")
+      })
+      .catch((err) => {
+        console.error(err)
+      })
     };
 
     useEffect(() => {
       generateToken();
     }, []);
-    useEffect(() => {
-      console.log(linkToken);
-    }, [linkToken]);
     return linkToken != null ? <PlaidLink linkToken={linkToken} /> : <></>;
   };
 
   const PlaidLink = (props) => {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
-      const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      const response = fetch("https://api.pennywise.money/set_access_token", {
+      // const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      // const response = fetch ("https://8df1-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ public_token: public_token, user_id: user_id }),
       });
-      // Handle response ...
-      // We need to store the access token in the react context for this application
-      // That way we don't have to keep pinging the database for that stuff
-      // Alternatively could use localStorage, but that has more security risks (I think)
     }, []);
     const config = {
       token: props.linkToken,
@@ -192,6 +196,8 @@ export default function Account() {
     };
     const { open, ready } = usePlaidLink(config);
     return (
+      <div>
+        <p>HEllo</p>
       <AnimatedButton
         bgColor={linkedBank ? "#ddd" : "#BCEE51"}
         hoverBgColor={linkedBank ? "#803333" : "#558033"}
@@ -203,6 +209,7 @@ export default function Account() {
         onPress={() => open()}
         disabled={!ready}
       />
+      </div>
     );
   };
 

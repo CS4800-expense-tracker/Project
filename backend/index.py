@@ -11,12 +11,17 @@ from sqlalchemy import and_, extract
 import datetime
 from openai import OpenAI
 from flask_bcrypt import Bcrypt
+import schedule
+import threading
+
 
 import plaid
 from plaid.model.link_token_create_request import LinkTokenCreateRequest
+from plaid.model.webhook_type import WebhookType
 from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
 from plaid.model.item_public_token_exchange_request import ItemPublicTokenExchangeRequest
 from plaid.model.transactions_sync_request import TransactionsSyncRequest
+from plaid.model.sandbox_item_fire_webhook_request import SandboxItemFireWebhookRequest
 from plaid.model.products import Products
 from plaid.model.country_code import CountryCode
 from plaid.api import plaid_api
@@ -34,9 +39,8 @@ app.secret_key = env.get("APP_SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = env.get('SQLALCHEMY_DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 db = SQLAlchemy(app)
-client = OpenAI()
+open_api_client = OpenAI()
 bcrypt = Bcrypt(app) 
 
 
@@ -45,7 +49,8 @@ PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
 PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
-webhook_url = 'http://127.0.0.1:5000/recieve_plaid_webhook'
+# webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
+webhook_url = ' https://cc33-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -140,11 +145,6 @@ class SubExpense(db.Model):
 
 
 """             STARTING ROUTES SECTION          """
-# @app.before_request
-# def basic_authentication():
-#     if request.method.lower() == 'options':
-#         return Response()
-
 @app.route("/")
 def home():
     """
@@ -159,7 +159,7 @@ def home():
     Kinda memory intensive, but whatever. Also might wanna find a way to do this outside of flask,
     Cause for a big table this will take up a LOT of memory  
     """    
-    return "Hello World"
+    return "World"
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -222,7 +222,7 @@ def signup():
         # adding all user defined categories
         for category in category_arr:
             category_name = category["name"]
-            category_percent = int(category["amount"]) // 100
+            category_percent = int(category["amount"])
 
             new_category = Category(user_id=user_id, name=category_name, percent=category_percent, timestamp=datetime.datetime.now())
             db.session.add(new_category)
@@ -246,19 +246,29 @@ def signup():
 
 ## Removed all login routes from backend cause it just does not work lol
 
+### These are all the routes that are currently in use, more of the routes that can be used in the future are stored in "routes.py"
+
 # CRUD Methods for User
-# Add new user
+# Add new user route is not needed anymore because login/signup is taking care of it. Still here for testing purposes.
 @app.route('/user', methods=['POST'])
 def add_user():
     try:
         data = request.get_json()
-        if(data.get('email') == '' or data.get('email') is None or data.get('name') == '' or data.get('name') is None):
-            raise Exception("Email or Name not specified")
+        if(data.get('name') == '' or data.get('name') is None or data.get('email') == '' or data.get('email') is None or data.get('password') == '' or data.get('password') is None):
+            raise Exception("Name or Email or password not specified")
 
         email = data.get('email')
-        name = data.get('name')
+        name = data.get("name")
+        unhashed_password = data.get("password")
+        #hashed_password = Bcrypt.generate_password_hash(unhashed_password).decode('utf-8') 
 
-        new_user = User(email=email, name=name)
+        # Check to see if user already exists in server
+        curr_user = db.session.query(User).filter(User.email == email).all() 
+        if(len(curr_user) > 0):
+            raise Exception("User already signed up")
+
+        ## adding to user category
+        new_user = User(email=email, name=name, password=unhashed_password)
         db.session.add(new_user)
         db.session.commit()
 
@@ -267,7 +277,7 @@ def add_user():
         error_message = {"error": f"Error adding user: {str(e)}"}
         return jsonify(error_message)
 
-# Read user info
+# Read user info, user_id is required
 @app.route('/user/<user_id>', methods=['GET'])
 def get_user(user_id):
     try:
@@ -277,7 +287,7 @@ def get_user(user_id):
         error_message = {"error": f"Error finding user: {str(e)}"}
         return jsonify(error_message)
 
-# Update user's name
+# Update user's name, user_id is required
 @app.route('/user/<user_id>', methods=['PUT'])
 def update_user(user_id):
     try:
@@ -296,6 +306,7 @@ def update_user(user_id):
         error_message = {"error": f"Error updating user: {str(e)}"}
         return jsonify(error_message)
 
+# Delete user and the data associated with them, user_id is required
 @app.route('/user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
@@ -333,33 +344,9 @@ def delete_user(user_id):
         return jsonify(error_message)
 
 # CRUD Methods for TotalBudget
-# Add new budget
-@app.route('/total_budget/<user_id>', methods=['POST'])
-def add_total_budget(user_id):
-    try:
-        #user = User.query.get(user_id)
-        timestamp = datetime.datetime.now()
+# Add new budget route is not in use anymore, login/sign up is taking care of it, however, users can update their budget.
 
-        data = request.get_json()
-        if(data.get('total_budget') == '' or data.get('total_budget') is None):
-            raise Exception("Total Budget not specified")
-        
-        total_budget = data.get('total_budget')
-
-        new_total_budget = TotalBudget(
-            user_id=user_id,
-            timestamp=timestamp,
-            total_budget=total_budget
-        )
-        db.session.add(new_total_budget)
-        db.session.commit()
-
-        return "Total Budget added successfully"
-    except Exception as e:
-        error_message = {"error": f"Error adding total budget: {str(e)}"}
-        return jsonify(error_message)
-
-# Read the latest total budget
+# Read the latest total budget, user_id is required
 @app.route('/total_budget/<user_id>', methods=['GET'])
 def get_total_budget(user_id):
     try:
@@ -376,7 +363,7 @@ def get_total_budget(user_id):
         error_message = {"error": f"Error finding total budget: {str(e)}"}
         return jsonify(error_message)
 
-# Update Budget based on the latest timestamp in the database
+# Update Budget (based on the latest timestamp in the database), user_id is required
 @app.route('/total_budget/<user_id>', methods=['PUT'])
 def update_total_budget(user_id):
     try:
@@ -405,32 +392,10 @@ def update_total_budget(user_id):
         error_message = {"error": f"Error updating total budget: {str(e)}"}
         return jsonify(error_message)
     
-# Delete Budget based on latest timestamp in the database
-@app.route('/total_budget/<user_id>', methods=['DELETE'])
-def delete_total_budget(user_id):
-    try:
-        #current_month = datetime.datetime.now().strftime('%B')  # Get the full month name (e.g., January) for returning error message
-        #current_year = datetime.datetime.now().strftime('%Y')   # Get the four-digit year (e.g., 2023) for returning error message
-
-        total_budget = TotalBudget.query.filter(
-            TotalBudget.user_id == user_id
-        ).order_by(TotalBudget.timestamp.desc()).first()
-
-        if total_budget:
-            db.session.delete(total_budget)
-            db.session.commit()
-
-            return "Total Budget deleted successfully"
-        else:
-            error_message = {"error": f"Total Budget not found"}
-            return jsonify(error_message)
-    except Exception as e:
-        error_message = {"error": f"Error deleting total budget: {str(e)}"}
-        return jsonify(error_message)
-    
+# Delete Budget is not in use anymore because user needs to have a budget, though they can update their budget
 
 # CRUD Methods for Category
-# Add new category
+# Add new category, user_id is required
 @app.route('/category/<user_id>', methods=['POST'])
 def add_category(user_id):
     try:
@@ -459,7 +424,7 @@ def add_category(user_id):
         error_message = {"error": f"Error adding category: {str(e)}"}
         return jsonify(error_message)
 
-# Read all categories based on the latest month
+# Read all categories based on the latest month, user_id is required
 @app.route('/categories/<user_id>', methods=['GET']) #check the route name with the team
 def get_categories(user_id):
     try:
@@ -483,12 +448,8 @@ def get_categories(user_id):
         error_message = {"error": f"Error finding categories: {str(e)}"}
         return jsonify(error_message)
 
-# Create a GET route
-# To return a category
-# Based on just the category_id
-
-# Update category based on user_id and name. Updating the name and percent 
-# (note: frontend will need to return the previous name of the renamed category if the name was changed)
+# Update category name and percent, user_id and previous category_name are required
+# frontend will need to return the previous name of the renamed category
 @app.route('/category/<user_id>/<category_name>', methods=['PUT'])
 def update_category(user_id, category_name):
     try:
@@ -526,8 +487,8 @@ def update_category(user_id, category_name):
         error_message = {"error": f"Error updating category: {str(e)}"}
         return jsonify(error_message)
 
-# Delete category based on user_id and name 
-# (note: frontend will need to return the name of the category being deleted)
+# Delete category, user_id and category_name required
+# Frontend will need to return the name of the category being deleted, 
 @app.route('/category/<user_id>/<category_name>', methods=['DELETE'])
 def delete_category(user_id, category_name):
     try:
@@ -568,7 +529,7 @@ def delete_category(user_id, category_name):
 
 
 # CRUD Methods for Expense
-# Add new expense (this route can be used by frontend for users to add expenses manually)
+# Add new expense, user_id is required
 @app.route('/expense/<user_id>', methods=['POST'])
 def add_expense(user_id):
     try:
@@ -597,17 +558,18 @@ def add_expense(user_id):
         error_message = {"error": f"Error adding expense: {str(e)}"}
         return jsonify(error_message)
 
-# Read all expenses based on the latest month
-@app.route('/expense/<user_id>', methods=['GET'])
-def get_expenses(user_id):
+# There are two get expenses method, one used in the overview page and the other used in expense page
+# Creating a route that returns the last 5 expenses of the user (used in overview page), user_id is required
+@app.route('/last_five_expenses/<user_id>', methods=['GET'])
+def last_five_expenses(user_id):
     try:
-        current_month = int(datetime.datetime.now().strftime('%m')) # Get the month number as int
+        user = User.query.filter(User.user_id == user_id).first()
+        if not user:
+            raise Exception("User not found")
+        
         expenses = Expense.query.filter(
-            and_(
-                Expense.user_id == user_id,
-                extract('month', Expense.timestamp) == current_month
-            )
-        ).order_by(Expense.timestamp.desc()).all()
+                Expense.user_id == user_id
+        ).order_by(Expense.timestamp.desc()).limit(5).all()
 
         expense_info = []
         for expense in expenses:
@@ -617,13 +579,68 @@ def get_expenses(user_id):
                 "total_spent": expense.total_spent,
                 "timestamp": expense.timestamp
             })
+        
+        if expense_info:
+            return jsonify(expense_info)
+        else:
+            error_message = {"error": f"User does not have any expenses yet"}
+            return jsonify(error_message)
 
-        return jsonify(expense_info)
     except Exception as e:
-        error_message = {"error": f"Error finding expense: {str(e)}"}
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
         return jsonify(error_message)
 
-# Update category based on user_id and expense_id. Updating the store_name and total_spent
+# Creating a route that returns the newest 10 expenses and sub-expenses based on the page number (used in expense page), user_id and page number required
+# so if the user is on page 1, return the news 10 expenses and their sub-expenses
+@app.route('/expenses/<user_id>/<page_num>', methods=['GET'])
+def get_expenses(user_id, page_num):
+    try:
+        start = (int(page_num)-1)*10
+        expenses = Expense.query.filter(
+                Expense.user_id == user_id
+        ).order_by(Expense.timestamp.desc()).offset(start).limit(10).all()
+
+        expense_info = []
+        for expense in expenses:
+            expense_data = {
+                "expense_id": expense.expense_id,
+                "store_name": expense.store_name,
+                "total_spent": expense.total_spent,
+                "timestamp": expense.timestamp,
+                "sub_expenses": []
+            }
+
+            sub_expenses = SubExpense.query.filter(
+                    SubExpense.expense_id == expense.expense_id
+            ).all()
+            if sub_expenses:
+                for sub_expense in sub_expenses:
+                    # Find the category name based on category_id and current sub_expense
+                    category_id = sub_expense.category_id
+                    category = Category.query.filter(
+                        Category.category_id == category_id
+                    ).order_by(Category.timestamp.desc()).first()
+
+                    sub_expense_data = {
+                        "sub_expense_id": sub_expense.sub_expense_id,
+                        "spent": sub_expense.spent,
+                        "category_name": category.name if category else None
+                    }
+                    expense_data["sub_expenses"].append(sub_expense_data)
+            expense_info.append(expense_data)
+        
+        if expense_info:
+            return jsonify(expense_info)
+        else:
+            error_message = {"error": f"Expenses not found"}
+            return jsonify(error_message)
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Updating the store_name and total_spent, user_id and expense_id are required
+# Even if a user is only updating store_name, frontend needs to return the total_spent
 @app.route('/expense/<user_id>/<expense_id>', methods=['PUT'])
 def update_expense(user_id, expense_id):
     try:
@@ -658,7 +675,7 @@ def update_expense(user_id, expense_id):
         error_message = {"error": f"Error updating expense: {str(e)}"}
         return jsonify(error_message)
 
-# Delete expense based on user_id and expense_id
+# Delete expense, user_id and expense_id are required
 @app.route('/expense/<user_id>/<expense_id>', methods=['DELETE'])
 def delete_expense(user_id, expense_id):
     try:
@@ -666,7 +683,6 @@ def delete_expense(user_id, expense_id):
         sub_expenses_to_delete = SubExpense.query.filter(
             and_(
                 SubExpense.expense_id == expense_id,
-                SubExpense.expense_id.has(user_id=user_id)  # Filtering by user_id
             )
         ).all()
         for sub_expense in sub_expenses_to_delete:
@@ -694,9 +710,9 @@ def delete_expense(user_id, expense_id):
         return jsonify(error_message)
 
 # CRUD Methods for Sub_Expense
-# Add new sub_expense
-# (Note: the frontend does not have the category id, they wil give us the category name, 
-# and we will search for the latest category id corresponding to the provided category name and user_id)
+# Add new sub_expense, user_id and expense_id are required
+# The frontend doesn't need to store category_id, they need to send the category name though
+# So frontend data will be "category_name" and "spent"
 @app.route('/sub_expense/<user_id>/<expense_id>', methods=['POST'])
 def add_sub_expense(user_id, expense_id):
     try:
@@ -737,19 +753,17 @@ def add_sub_expense(user_id, expense_id):
         error_message = {"error": f"Error adding sub-expense: {str(e)}"}
         return jsonify(error_message)
 
-# Read all sub-expenses associated with Expense
+# Read all sub-expenses associated with Expense, expense_id is required
 @app.route('/sub_expense/<expense_id>', methods=['GET'])
 def get_sub_expense(expense_id):
     try:
         sub_expenses = SubExpense.query.filter(
-            and_(
                 SubExpense.expense_id == expense_id
-            )
         ).all()
 
         sub_expense_info = []
         for sub_expense in sub_expenses:
-            # Find the category name based on user_id and current sub_expense category_id
+            # Find the category name based on category_id and current sub_expense
             category_id = sub_expense.category_id
             category = Category.query.filter(
                 Category.category_id == category_id
@@ -766,7 +780,8 @@ def get_sub_expense(expense_id):
         error_message = {"error": f"Error finding sub expenses: {str(e)}"}
         return jsonify(error_message)
 
-# Update sub-expense based on user_id and sub-expense_id
+# Update sub-expense, user_id and sub-expense_id are required
+# Again, frontend data will need to sent in "category_name" and "spent"
 @app.route('/sub_expense/<user_id>/<sub_expense_id>', methods=['PUT'])
 def update_sub_expense(user_id, sub_expense_id):
     try:
@@ -806,16 +821,11 @@ def update_sub_expense(user_id, sub_expense_id):
         error_message = {"error": f"Error updating sub-expense: {str(e)}"}
         return jsonify(error_message)
 
-# Delete a sub-expense using expense_id and sub_expense_id
-@app.route('/sub_expense/<expense_id>/<sub_expense_id>', methods=['DELETE'])
-def delete_sub_expense(expense_id, sub_expense_id):
+# Delete a sub-expense, sub_expense_id is required
+@app.route('/sub_expense/<sub_expense_id>', methods=['DELETE'])
+def delete_sub_expense(sub_expense_id):
     try:
-        sub_expense = SubExpense.query.filter(
-                and_(
-                    SubExpense.expense_id == expense_id,
-                    SubExpense.sub_expense_id == sub_expense_id
-                )
-            ).first()
+        sub_expense = SubExpense.query.filter(SubExpense.sub_expense_id == sub_expense_id).first()
         
         if sub_expense:
             db.session.delete(sub_expense)
@@ -829,6 +839,108 @@ def delete_sub_expense(expense_id, sub_expense_id):
         error_message = {"error": f"Error deleting sub expense: {str(e)}"}
         return jsonify(error_message)
 
+# Creating a route that returns each category name, category budget, and total amount spent in that category for a month, user_id is required
+@app.route('/categories_analysis/<user_id>/<month>/<year>', methods=['GET'])
+def get_categories_analysis(user_id,month,year):
+    try:
+        total_budget = TotalBudget.query.filter(
+            TotalBudget.user_id == user_id
+        ).order_by(TotalBudget.timestamp.desc()).first()
+        
+        if not total_budget:
+            return jsonify({"error": "Total Budget not found"})
+
+        # Get categories for the user
+        categories = Category.query.filter(
+            and_(
+                Category.user_id == user_id,
+            )
+        ).order_by(Category.timestamp.desc()).all()
+
+        # Assigning each category to budget amount based on percentage
+        category_analysis = dict()
+        category_budget = []
+        for category in categories:
+            category_analysis[category.name] = 0
+            # Calculate the custom budget for each category
+            budget = (category.percent * total_budget.total_budget) / 100
+            category_budget.append(budget)
+
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).order_by(Expense.timestamp.desc()).all()
+
+        # Getting sub expenses and updating category spendings
+        for expense in expenses:
+            sub_expenses = SubExpense.query.filter(SubExpense.expense_id == expense.expense_id).all()
+
+            if not sub_expenses:
+                return jsonify({"error": "One or more expenses don't have a subexpense"})
+            
+            for sub_expense in sub_expenses:
+                # Find the category name based on subexpense's category_id
+                category_id = sub_expense.category_id
+                category = Category.query.filter(
+                    Category.category_id == category_id
+                ).order_by(Category.timestamp.desc()).first()
+
+                if category and category.name in category_analysis:
+                    print(category.name)
+                    print(category_analysis[category.name])
+                    category_analysis[category.name] += sub_expense.spent
+                    print(sub_expense.spent)
+                    print(category_analysis[category.name])
+                else:
+                    return jsonify({"error": "Category not found or doesn't exist"})
+        
+        json_list = [
+            {
+                "name": key,
+                "total_spent": round(value, 2),
+                "category_budget": round(category_budget[i], 2)
+            } 
+            for i, (key, value) in enumerate(category_analysis.items())
+        ]
+        return jsonify(json_list)
+    
+    except Exception as e:
+        error_message = {"error": f"Error accessing total_budget or categories or expenses or sub_expenses: {str(e)}"}
+        return jsonify(error_message)
+
+# Creating a route that returns the total amount spent so far during a month, based on the month number and year requested
+# user_id, month (number), and yaer are required
+@app.route('/total_spent/<user_id>/<month>/<year>', methods=['GET'])
+def get_total_spent(user_id,month,year):
+    try:
+        expenses = Expense.query.filter(
+            and_(
+                Expense.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).all()
+
+        total_spent = sum(expense.total_spent for expense in expenses)
+
+        total_budgets = TotalBudget.query.filter(
+            and_(
+                TotalBudget.user_id == user_id,
+                extract('month', Expense.timestamp) == month,
+                extract('year', Expense.timestamp) == year
+            )
+        ).first()
+
+        total_budget = total_budgets.total_budget
+
+        return jsonify({"total_spent": total_spent, "total_budget": total_budget})
+
+    except Exception as e:
+        error_message = {"error": f"Error accessing expenses: {str(e)}"}
+        return jsonify(error_message)
 
 def categorize(expense_name, user_id):
     """
@@ -849,7 +961,7 @@ def categorize(expense_name, user_id):
     # timestamp must be within this month
     category_arr = db.session.query(Category.name, Category.category_id).filter(Category.user_id == user_id).all()
 
-    completion = client.chat.completions.create(
+    completion = open_api_client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a wonderful AI machine that determines what category of purchase some given purchase name falls into. You can choose from the list of categories that the user provides as an array. This array will contain a list of tuples, with the structure (name, id). The user will then send a purchase name, and you must deduce what category it best falls under based on the list given in the first line of the message. Choose the category that best fits this purchase, and only return the id that corresponds to this name. You should ONLY return the id, do not return any other information."},
@@ -876,16 +988,16 @@ def plaid_upload_new_expense(item_id: str):
         has_more = True
         # Iterate through each page of new transaction updates for item
         while has_more:
-            request = TransactionsSyncRequest(
+            req = TransactionsSyncRequest(
                 access_token=user_access_token,
                 cursor=cursor,
             )
-            response = plaid_client.transactions_sync(request)
+            res = plaid_client.transactions_sync(req)
             # Add this page of results
-            added.extend(response['added'])
-            has_more = response['has_more']
+            added.extend(res['added'])
+            has_more = res['has_more']
             # Update cursor to the next cursor
-            cursor = response['next_cursor']
+            cursor = res['next_cursor']
 
 
         # updating the user's cursor position
@@ -921,13 +1033,39 @@ def plaid_upload_new_expense(item_id: str):
         return f"Error: {e}"
 
 
+@app.route("/test_plaid_webhook", methods=["POST"])
+def test_plaid_webhook():
+    try:
+        data = request.get_json()
+        if(not data or len(data) < 1):
+            raise Exception("No request body found")
+
+        print("WE HAVE RECIEVED A WEBHOOK, YIPEEEE")
+
+        user_id = data.get("user_id")
+        user = db.session.query(User).get(user_id)
+        access_token = user.plaid_access_token
+        
+        req = SandboxItemFireWebhookRequest(
+            access_token=access_token,
+            # This is the stupidest line of code to exist. Plaid should be ashamed of themselves.
+            webhook_type=WebhookType("TRANSACTIONS"),
+            webhook_code='SYNC_UPDATES_AVAILABLE'
+        )
+
+        res = plaid_client.sandbox_item_fire_webhook(req)
+        return str(res)
+    except Exception as e:
+        return f"Error: {e}"
+
+
 
 @app.route("/recieve_plaid_webhook", methods=['POST'])
 def recieve_plaid_webhook():
     try:
         data = request.get_json()
         if(not data or len(data) < 1):
-            raise Exception("No requesty body found")
+            raise Exception("No request body found")
         
         product = data['webhook_type']
         code = data['webhook_code']
@@ -969,19 +1107,19 @@ def create_link_token():
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
                 country_codes=[CountryCode('US')],
-                redirect_uri="http://localhost:5000/callback",
+                redirect_uri="https://pennywise.money.com/",
                 language='en',
                 # For now, webhook is left blank. We will fix that in a little
                 webhook=webhook_url,
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
-        response = plaid_client.link_token_create(req)
+        res = plaid_client.link_token_create(req)
 
         # Send the data to the client
-        return jsonify(response.to_dict())
+        return jsonify(res.to_dict())
     except Exception as e:
-        return f"Error: {e}"
+        return jsonify({ "error" : f"Error: {e}" })
 
 def save_access_token_and_item_id_in_user_row(access_token: str, item_id: str, user_id: int):
     # Thie method will just take in a user id and set the access token 
@@ -1024,6 +1162,62 @@ def exchange_public_token():
 def health():
     return f"I'm healthy!{time.time()}"
 
+# Creating a cron job to create a new total_buget and categories enteries for each user at the beginning of the month
+def add_monthly_budget_categories():
+    # Get the current month and year
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month
 
+    # For all users
+    users = User.query.all()
+    for user in users:
+        # Get the current total budget for the user
+        current_total_budget = TotalBudget.query.filter_by(user_id=user.user_id).order_by(TotalBudget.timestamp.desc()).first()
+
+        if current_total_budget:
+            # Create a new TotalBudget instance for the first day of the current month
+            current_month = datetime.datetime(year, month, 1)
+            new_total_budget = TotalBudget(
+                user_id=user.user_id,
+                timestamp=current_month,
+                total_budget=current_total_budget.total_budget  # Use the current total_budget
+            )
+            db.session.add(new_total_budget)
+
+            # Add new categories for the month for each user based on existing categories
+            categories = Category.query.filter_by(user_id=user.user_id).all()
+            for category in categories:
+                new_category = Category(
+                    user_id=user.user_id,
+                    name=category.name,
+                    percent=category.percent,  # Use the current percentage
+                    timestamp=current_month
+                )
+                db.session.add(new_category)
+    
+    db.session.commit()
+    print("Monthly budgets and categories added successfully.")
+
+# Schedule the job to run at the start of every month
+# schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+
+# # Run the scheduler in an infinite loop
+# while True:
+#     schedule.run_pending()
+
+# if __name__ == "__main__":
+#     app.run(host="localhost", port=3000)
+
+# Function to run the scheduler in a separate thread
+# def run_scheduler():
+#     while True:
+#         schedule.run_pending()
+
+# Create and start the scheduler thread
+# scheduler_thread = threading.Thread(target=run_scheduler)
+# scheduler_thread.start()
+
+# Run the Flask app in the main thread
 if __name__ == "__main__":
     app.run(host="localhost", port=3000)

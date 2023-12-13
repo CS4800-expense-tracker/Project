@@ -27,6 +27,13 @@ export default function Landing() {
   const useSmallText = width >= 950 ? false : true;
 
   const [displayMenu, setDisplayMenu] = React.useState(false);
+  const payload = {
+    "webhook_type" : "TRANSACTIONS",
+    "webhook_code" : "SOMETHING",
+    "item_id" : "SOMETHING"
+  }
+
+  
 
   return (
     <View style={styles.container}>
