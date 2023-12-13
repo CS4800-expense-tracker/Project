@@ -1112,7 +1112,7 @@ def create_link_token():
         # Send the data to the client
         return jsonify(res.to_dict())
     except Exception as e:
-        return f"Error: {e}"
+        return jsonify({ "error" : f"Error: {e}" })
 
 def save_access_token_and_item_id_in_user_row(access_token: str, item_id: str, user_id: int):
     # Thie method will just take in a user id and set the access token 
@@ -1193,7 +1193,7 @@ def add_monthly_budget_categories():
     print("Monthly budgets and categories added successfully.")
 
 # Schedule the job to run at the start of every month
-schedule.every().day.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
+schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
 
 # # Run the scheduler in an infinite loop
 # while True:
