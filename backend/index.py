@@ -225,7 +225,7 @@ def signup():
         # adding all user defined categories
         for category in category_arr:
             category_name = category["name"]
-            category_percent = int(category["amount"]) // 100
+            category_percent = int(category["amount"])
 
             new_category = Category(user_id=user_id, name=category_name, percent=category_percent, timestamp=datetime.datetime.now())
             db.session.add(new_category)
