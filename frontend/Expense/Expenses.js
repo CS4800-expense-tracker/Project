@@ -312,7 +312,7 @@ export default function Expenses() {
       <View style={styles.container}>
         <Sidebar page="expenses" />
         <SectionView>
-          <Heading1>Expenses</Heading1>
+          <Heading1 style={{ marginBottom: 16 }}>Expenses</Heading1>
           <ScrollView style={{ flex: 1, ...styles.subContainer1 }}>
             {data.map((expense, idx) => {
               return <Expense data={expense} index={idx} />;
@@ -356,8 +356,7 @@ const makeStyles = (width) =>
     },
     subContainer1: {
       width: "100%",
-      margin: 20,
-      padding: "10%",
+      padding: 32,
       backgroundColor: "#ddd",
       borderRadius: 22,
     },
