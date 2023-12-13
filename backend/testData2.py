@@ -17,7 +17,7 @@ store_names = [
 # Function to create test data for ten users
 with app.app_context():
     categories_list = ["Groceries", "Entertainment", "Clothing", "Transportation", "Dining Out", "Utilities"]
-    for i in range(1, 11):
+    for i in range(11, 21):
         email = f"user{i}@example.com"
         name = fake.name()  # Generate a fake name
         password = generate_password_hash(f"password{i}").decode('utf-8')

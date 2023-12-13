@@ -126,10 +126,10 @@ class SubExpense(db.Model):
     expense_id = db.Column(db.Integer, db.ForeignKey(Expense.expense_id), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey(Category.category_id), nullable=False)
     spent = db.Column(db.Float, nullable=False)
-    sub_expense_name = db.Column(db.String(255), nullable=True)
+    sub_expense_name = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
-        return f'<test sub_expense_id={self.sub_expense_id}, expense_id={self.expense_id}, category_id={self.category_id}, spent={self.spent}, sub_expense_name={self.sub_expense_name} />'
+        return f'<test sub_expense_id={self.sub_expense_id}, expense_id={self.expense_id}, category_id={self.category_id}, spent={self.spent}, sub_expense_name={self.sub_expense_name}/>'
 
 # creates all tables defined above. only run this if you're creating a new table.
 # with app.app_context():
@@ -592,10 +592,12 @@ def get_expenses(user_id, page_num):
                     sub_expense_data = {
                         "sub_expense_id": sub_expense.sub_expense_id,
                         "spent": sub_expense.spent,
+                        "sub_expense_name": sub_expense.sub_expense_name,
                         "category_name": category.name if category else None
                     }
                     expense_data["sub_expenses"].append(sub_expense_data)
             expense_info.append(expense_data)
+            # merge
         
         if expense_info:
             return jsonify(expense_info)
@@ -694,6 +696,7 @@ def add_sub_expense(user_id, expense_id):
 
         spent = data.get('spent')
         category_name = data.get('category_name')
+        sub_expense_name = data.get('sub_expense_name')
 
         # Find the latest category id based on user_id and category name
         latest_category = Category.query.filter(
@@ -707,7 +710,8 @@ def add_sub_expense(user_id, expense_id):
             new_sub_expense = SubExpense(
                 expense_id=expense_id,
                 category_id=latest_category.category_id,
-                spent=spent
+                spent=spent,
+                sub_expense_name=sub_expense_name
             )
 
             db.session.add(new_sub_expense)
@@ -740,6 +744,7 @@ def get_sub_expense(expense_id):
             sub_expense_info.append({
                 "sub_expense_id": sub_expense.sub_expense_id,
                 "spent": sub_expense.spent,
+                "sub_expense_name": sub_expense.sub_expense_name,
                 "category_name": category.name if category else None
             })
         
@@ -760,6 +765,7 @@ def update_sub_expense(user_id, sub_expense_id):
 
         category_name = data.get('category_name')
         new_spent = data.get('spent')
+        new_sub_expense_name = data.get('sub_expense_name')
 
         # Find the latest category_id based on user_id and category_name
         latest_category = Category.query.filter(
@@ -775,6 +781,7 @@ def update_sub_expense(user_id, sub_expense_id):
             if(sub_expense):
                 sub_expense.spent = new_spent
                 sub_expense.category_id = latest_category.category_id
+                sub_expense.sub_expense_name = new_sub_expense_name
 
                 db.session.commit()
 
