@@ -23,8 +23,8 @@ export default function Account() {
   const { state: appContext, dispatch: appDispatch } = useContext(
     AppContext
   );
-  const linkedBank = localStorage.getItem("isBankLinked") === "false" || localStorage.getItem("isBankLinked") === null ? false : true;
-  const user_id = localStorage.getItem("user_id")
+  const user_id = appContext.userID
+  const linkedBank = appContext.isBankLinked
 
   const { height, width } = useWindowDimensions();
   const styles = makeStyles(width);
@@ -164,6 +164,7 @@ export default function Account() {
       .then((response) => (response.json()))
       .then((data) => {
         setLinkToken(data.link_token)
+        appDispatch({type: "setIsBankLinked", value: true})
       })
       .catch((err) => {
         console.error(err)

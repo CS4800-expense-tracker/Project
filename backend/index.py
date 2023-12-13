@@ -49,7 +49,6 @@ PLAID_CLIENT_ID = env.get("PLAID_CLIENT_ID")
 PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
-# webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
 webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
 
 PLAID_SECRET = None
@@ -172,7 +171,9 @@ def login():
 
         if(is_valid):
             sending_dict = {}
-            if(curr_user[0].plaid_access_token is not None):
+            print(curr_user[0].plaid_access_token)
+            print((len(curr_user[0].plaid_access_token) > 0))
+            if(len(curr_user[0].plaid_access_token) > 0): 
                 sending_dict["has_plaid_token"] = True
             sending_dict["user_id"] = curr_user[0].user_id
             return jsonify(sending_dict)

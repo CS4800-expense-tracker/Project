@@ -70,8 +70,8 @@ export default function Login({ navigation }) {
         body: JSON.stringify(formData),
       };
 
-      fetch("https://api.pennywise.money/login", requestOptions)
-      // fetch(" http://127.0.0.1:5000/login", requestOptions)
+      // fetch("https://api.pennywise.money/login", requestOptions)
+      fetch(" http://127.0.0.1:5000/login", requestOptions)
         .then((response) => response.json())
         .then((data) => {
           if (data && "error" in data) {
@@ -85,12 +85,9 @@ export default function Login({ navigation }) {
           } else {
             // If we have no error, we just navigate to account overview and we set the user id to context
             if (data) {
-              console.log(data)
-              localStorage.setItem("user_id", data.user_id)
+              appDispatch({type: "setUserID", value: data.user_id})
               if (data.has_plaid_token) {
-                localStorage.setItem("isBankLinked", true)
-              } else {
-                localStorage.setItem("isBankLinked", false)
+                appDispatch({type: "setIsBankLinked", value: true})
               }
               navigation.navigate("Overview");
               return;

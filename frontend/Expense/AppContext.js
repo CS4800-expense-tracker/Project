@@ -3,7 +3,7 @@ import { createContext, useReducer } from "react";
 export const AppContext = createContext();
 
 const initialState = {
-    userID: 1,
+    userID: -1,
     isBankLinked: false,
 }
 
