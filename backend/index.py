@@ -50,6 +50,7 @@ PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
 webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
+# webhook_url = 'https://nine-drinks-vanish.loca.lt/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -60,6 +61,8 @@ if PLAID_ENV == 'sandbox':
 if PLAID_ENV == 'development':
     host = plaid.Environment.Development
     PLAID_SECRET = env.get("PLAID_DEVELOPMENT_SECRET")
+
+print(PLAID_SECRET)
 
 configuration = plaid.Configuration(
     host=host,
@@ -930,13 +933,17 @@ def categorize(expense_name, user_id):
 
 def plaid_upload_new_expense(item_id: str):
     try:
-        result = db.session.query(User).filter(User.item_id == item_id).all() 
+        result = db.session.query(User).filter(User.plaid_item_id == item_id).all() 
         if(result == [] or result is None):
             raise Exception("User not found in db")
         user = result[0]
 
         cursor = user.cursor
-        user_access_token = user.access_token
+        if(cursor is None):
+            cursor = ""
+        else: 
+            cursor = str(user.cursor)
+        user_access_token = user.plaid_access_token
         user_id = user.user_id
         # New transaction updates since "cursor"
         added = []
@@ -965,6 +972,8 @@ def plaid_upload_new_expense(item_id: str):
         for item in added:
             total_spent = item["amount"]
             timestamp = item["datetime"]
+            if (not timestamp):
+                timestamp = datetime.datetime.now()
             store_name = item["merchant_name"]
             category_id = categorize(store_name, user_id)
 
@@ -986,6 +995,8 @@ def plaid_upload_new_expense(item_id: str):
 
             db.session.add(new_sub_expense)
             db.session.commit()
+
+        return "done"
     except Exception as e:
         return f"Error: {e}"
 
@@ -1006,7 +1017,7 @@ def test_plaid_webhook():
         req = SandboxItemFireWebhookRequest(
             access_token=access_token,
             # This is the stupidest line of code to exist. Plaid should be ashamed of themselves.
-            webhook_type=WebhookType("TRANSACTIONS"),
+            # webhook_type=WebhookType("TRANSACTIONS"),
             webhook_code='SYNC_UPDATES_AVAILABLE'
         )
 
@@ -1024,7 +1035,6 @@ def recieve_plaid_webhook():
         if(not data or len(data) < 1):
             raise Exception("No request body found")
 
-        print("GOT WEBHOOK: ", data)
         
         product = data['webhook_type']
         code = data['webhook_code']
@@ -1032,14 +1042,14 @@ def recieve_plaid_webhook():
 
         if (product == "TRANSACTIONS"):
             if (code == "SYNC_UPDATES_AVAILABLE"):
-                print("got sync")
-                plaid_upload_new_expense(item_id)
+                print("sync update")
+                test = plaid_upload_new_expense(item_id)
             elif (code == "INITIAL_UPDATE"):
-                print("got initial")
-                plaid_upload_new_expense(item_id)
-                print("got historic")
+                print("initial update")
+                # test = plaid_upload_new_expense(item_id)
             elif (code == "HISTORICAL_UPDATE"):
-                plaid_upload_new_expense(item_id)
+                print("historical update")
+                # test = plaid_upload_new_expense(item_id)
             else:
                 # not raising an exception because I think then the webhook would keep on refiring
                 # which is very annoying (you NEED to send a status code of 200 within 10 seconds or it'll resend)
@@ -1047,6 +1057,7 @@ def recieve_plaid_webhook():
         else:
             print("Unknown webhook product sent")
 
+        print("WE out the switchs statement")
         return {"status": "recieved :D"}
     except Exception as e:
         return f"Error: {e}"
@@ -1116,6 +1127,7 @@ def exchange_public_token():
         response = plaid_client.item_public_token_exchange(req)
         access_token = response['access_token']
         item_id = response['item_id']
+        plaid_upload_new_expense(item_id)
         save_access_token_and_item_id_in_user_row(access_token, item_id, user_id)
         # whenever we perform anything with plaid API, we need to ask for the user id
         # so that we can also get that user's access key

@@ -231,8 +231,8 @@ export default function Account({ navigation }) {
         method: "POST",
         body: JSON.stringify({ user_id: user_id }),
       };
-      fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
-        // fetch("https://api.pennywise.money/create_link_token", tokenConfig)
+      // fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
+      fetch("https://api.pennywise.money/create_link_token", tokenConfig)
         .then((response) => response.json())
         .then((data) => {
           setLinkToken(data.link_token);
@@ -251,8 +251,8 @@ export default function Account({ navigation }) {
   const PlaidLink = (props) => {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
-      // const response = fetch("https://api.pennywise.money/set_access_token", {
-      const response = fetch("http://127.0.0.1:5000/set_access_token", {
+      const response = fetch("https://api.pennywise.money/set_access_token", {
+        // const response = fetch("http://127.0.0.1:5000/set_access_token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
