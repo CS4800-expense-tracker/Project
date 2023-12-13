@@ -50,7 +50,7 @@ PLAID_ENV = env.get("PLAID_ENV")
 # this won't work for now, cause we need to have a publicly facing webhook for this
 # they recommended making a different server running on a diff port for security, but like fuck that too much work
 # webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
-webhook_url = ' https://cc33-2603-8001-dff0-6e0-c892-1344-ed4f-b7e2.ngrok-free.app/recieve_plaid_webhook'
+webhook_url = 'https://api.pennywise.money/recieve_plaid_webhook'
 
 PLAID_SECRET = None
 host = None
@@ -73,16 +73,6 @@ configuration = plaid.Configuration(
 
 api_client = plaid.ApiClient(configuration)
 plaid_client = plaid_api.PlaidApi(api_client)
-
-oauth.register(
-    "auth0",
-    client_id=env.get("AUTH0_CLIENT_ID"),
-    client_secret=env.get("AUTH0_CLIENT_SECRET"),
-    client_kwargs={
-        "scope": "openid profile email",
-    },
-    server_metadata_url=f'https://{env.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
-)
 
 """ CREATING TABLES """
 
@@ -1101,16 +1091,15 @@ def create_link_token():
 
         # Create a link_token for the given user
         req = LinkTokenCreateRequest(
-                user=LinkTokenCreateRequestUser(
-                    client_user_id=str(user_id),
-                ),
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
                 country_codes=[CountryCode('US')],
                 redirect_uri="https://pennywise.money.com/",
                 language='en',
-                # For now, webhook is left blank. We will fix that in a little
                 webhook=webhook_url,
+                user=LinkTokenCreateRequestUser(
+                    client_user_id=str(user_id),
+                ),
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
