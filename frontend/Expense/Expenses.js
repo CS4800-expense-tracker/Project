@@ -47,7 +47,6 @@ export default function Expenses() {
       // fetch(`http://127.0.0.1:5000/categories/${userID}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
         const catNames = data.map((item) => `${item.name} (${item.percent}%)`);
         setUserCategoryList(catNames);
       });
@@ -240,6 +239,7 @@ export default function Expenses() {
             <View style={styles.column}>
               <Text style={styles.subExpensesLabel}>Sub Expenses:</Text>
               {sub_expenses.map((subExpense, subIndex) => {
+                if(subIndex === 0) console.log(subExpense);
                 const { category_name, spent, sub_expense_name } = subExpense;
                 const today = String(new Date());
                 const date = formatDate(today);

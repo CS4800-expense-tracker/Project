@@ -307,14 +307,14 @@ export default function Account({ navigation }) {
         body: JSON.stringify({ user_id: user_id }),
       };
       // fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
-      // fetch("https://cs4800.acgandhi.com/create_link_token", tokenConfig)
-      //   .then((response) => response.json())
-      //   .then((data) => {
-      //     setLinkToken(data.link_token);
-      //   })
-      //   .catch((err) => {
-      //     console.error(err);
-      //   });
+      fetch("https://cs4800.acgandhi.com/create_link_token", tokenConfig)
+        .then((response) => response.json())
+        .then((data) => {
+          setLinkToken(data.link_token);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     };
 
     useEffect(() => {
@@ -650,7 +650,7 @@ export default function Account({ navigation }) {
             You {linkedBank ? "already" : "do not currently"} have a bank
             account connected with PennyWise
           </BodyText>
-          {/* <BankButton /> */}
+          <BankButton />
           <View style={styles.bottomMarginLarge}></View>
           <Heading2 style={[styles.bottomMarginSmall, styles.mobileCenter]}>
             Delete your account
