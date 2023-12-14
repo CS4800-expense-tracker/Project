@@ -34,14 +34,14 @@ export default function Account({ navigation }) {
   const [update, setUpdate] = useState(false);
 
   useEffect(() => {
-    fetch(`https://api.pennywise.money/total_budget/${user_id}`)
+    fetch(`https://cs4800.acgandhi.com/total_budget/${user_id}`)
       .then((response) => response.json())
       .then((data) => {
         setUserBudget(data);
         console.log("This is from fetch", data);
       })
       .catch((err) => console.error(err));
-    fetch(`https://api.pennywise.money/categories/${user_id}`)
+    fetch(`https://cs4800.acgandhi.com/categories/${user_id}`)
       .then((response) => response.json())
       .then((data) => {
         setUserCategories(data);
@@ -101,7 +101,7 @@ export default function Account({ navigation }) {
       };
 
       fetch(
-        `https://api.pennywise.money/total_budget/${user_id}`,
+        `https://cs4800.acgandhi.com/total_budget/${user_id}`,
         requestOptions
       )
         .then((response) => response.json())
@@ -165,7 +165,7 @@ export default function Account({ navigation }) {
         }),
       };
 
-      fetch(`https://api.pennywise.money/category/${user_id}`, requestOptions)
+      fetch(`https://cs4800.acgandhi.com/category/${user_id}`, requestOptions)
         .then((response) => response.json())
         .then((data) => {
           // console.log(data);
@@ -235,7 +235,7 @@ export default function Account({ navigation }) {
       };
 
       fetch(
-        `https://api.pennywise.money/category/${user_id}/${
+        `https://cs4800.acgandhi.com/category/${user_id}/${
           selectedCategoryEdit.split(" ")[0]
         }`,
         requestOptions
@@ -264,7 +264,7 @@ export default function Account({ navigation }) {
     };
 
     fetch(
-      `https://api.pennywise.money/category/${user_id}/${
+      `https://cs4800.acgandhi.com/category/${user_id}/${
         selectedCategoryDelete.split(" ")[0]
       }`,
       requestOptions
@@ -286,7 +286,7 @@ export default function Account({ navigation }) {
         headers: { "Content-Type": "application/json" },
       };
 
-      fetch(`https://api.pennywise.money/user/${user_id}`, requestOptions)
+      fetch(`https://cs4800.acgandhi.com/user/${user_id}`, requestOptions)
         .then((response) => response.json())
         .then((data) => {
           // console.log(data);
@@ -307,7 +307,7 @@ export default function Account({ navigation }) {
         body: JSON.stringify({ user_id: user_id }),
       };
       // fetch("http://127.0.0.1:5000/create_link_token", tokenConfig)
-      // fetch("https://api.pennywise.money/create_link_token", tokenConfig)
+      // fetch("https://cs4800.acgandhi.com/create_link_token", tokenConfig)
       //   .then((response) => response.json())
       //   .then((data) => {
       //     setLinkToken(data.link_token);
@@ -326,7 +326,7 @@ export default function Account({ navigation }) {
   const PlaidLink = (props) => {
     const onSuccess = React.useCallback((public_token, metadata) => {
       // send public_token to server
-      const response = fetch("https://api.pennywise.money/set_access_token", {
+      const response = fetch("https://cs4800.acgandhi.com/set_access_token", {
         // const response = fetch("http://127.0.0.1:5000/set_access_token", {
         method: "POST",
         headers: {

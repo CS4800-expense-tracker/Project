@@ -71,7 +71,7 @@ export default function Login({ navigation }) {
         body: JSON.stringify(formData),
       };
 
-      fetch("https://api.pennywise.money/login", requestOptions)
+      fetch("https://cs4800.acgandhi.com/login", requestOptions)
         // fetch(" http://127.0.0.1:5000/login", requestOptions)
         .then((response) => response.json())
         .then((data) => {
