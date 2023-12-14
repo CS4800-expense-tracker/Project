@@ -18,7 +18,7 @@ export default function Landing() {
   const heroImage = require("./img/hero_image.png");
   const tempImage = require("./img/placeholder.png");
   const overviewImage = require("./img/overview.png");
-  // const expensesImage = require("./img/expenses.png")
+  const expensesImage = require("./img/expenses.png");
   const accountImage = require("./img/account.png");
   const logoLb = require("./img/PennyWise_Logo_Lb.png");
   const logoDb = require("./img/PennyWise_Logo_Db.png");
@@ -189,7 +189,7 @@ export default function Landing() {
           breeze.
         </BodyText>
         <View style={styles.shadow}>
-          <Image source={overviewImage} style={styles.featureImages} />
+          <Image source={expensesImage} style={styles.featureImages} />
         </View>
       </View>
       <View
