@@ -240,7 +240,7 @@ export default function Expenses() {
             <View style={styles.column}>
               <Text style={styles.subExpensesLabel}>Sub Expenses:</Text>
               {sub_expenses.map((subExpense, subIndex) => {
-                const { category_name, spent } = subExpense;
+                const { category_name, spent, sub_expense_name } = subExpense;
                 const today = String(new Date());
                 const date = formatDate(today);
 
@@ -262,7 +262,7 @@ export default function Expenses() {
                             <BodyText
                               style={[styles.fontSize, { textAlign: "center" }]}
                             >
-                              Sub Expense Name
+                              {sub_expense_name}
                             </BodyText>
                             <BodyText
                               style={[styles.fontSize, { textAlign: "center" }]}
