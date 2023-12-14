@@ -126,10 +126,10 @@ class SubExpense(db.Model):
     expense_id = db.Column(db.Integer, db.ForeignKey(Expense.expense_id), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey(Category.category_id), nullable=False)
     spent = db.Column(db.Float, nullable=False)
-    sub_expense_name = db.Column(db.String(255), nullable=True)
+    sub_expense_name = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
-        return f'<test sub_expense_id={self.sub_expense_id}, expense_id={self.expense_id}, category_id={self.category_id}, spent={self.spent}, sub_expense_name={self.sub_expense_name} />'
+        return f'<test sub_expense_id={self.sub_expense_id}, expense_id={self.expense_id}, category_id={self.category_id}, spent={self.spent}, sub_expense_name={self.sub_expense_name}/>'
 
 # creates all tables defined above. only run this if you're creating a new table.
 # with app.app_context():
