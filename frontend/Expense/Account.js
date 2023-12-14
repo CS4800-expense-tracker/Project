@@ -343,11 +343,11 @@ export default function Account({ navigation }) {
     const { open, ready } = usePlaidLink(config);
     return (
       <AnimatedButton
-        bgColor={linkedBank ? "#ddd" : "#BCEE51"}
-        hoverBgColor={linkedBank ? "#803333" : "#558033"}
-        textColor={linkedBank ? "#803333" : "#384718"}
+        bgColor={!linkedBank ? "#ddd" : "#BCEE51"}
+        hoverBgColor={!linkedBank ? "#803333" : "#558033"}
+        textColor={!linkedBank ? "#803333" : "#384718"}
         hoverTextColor={"#fff"}
-        text={linkedBank ? "Unlink your account" : "Link your account"}
+        text={!linkedBank ? "Unlink your account" : "Link your account"}
         buttonStyle={{ width: linkedBank ? 216 : 200 }}
         viewStyle={styles.bankLinkButtonView}
         onPress={() => open()}
