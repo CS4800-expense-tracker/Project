@@ -34,7 +34,7 @@ export default function Expenses() {
 
   useEffect(() => {
     // const url = `http://127.0.0.1:5000/expenses/${userID}/${currPage}`;
-    const url = `https://cs4800.acgandhi.com/expenses/${userID}/${currPage}`;
+    const url = `https://api.pennywise.money/expenses/${userID}/${currPage}`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
@@ -43,7 +43,7 @@ export default function Expenses() {
   }, [currPage]);
 
   useEffect(() => {
-    fetch(`https://cs4800.acgandhi.com/categories/${userID}`)
+    fetch(`https://api.pennywise.money/categories/${userID}`)
       // fetch(`http://127.0.0.1:5000/categories/${userID}`)
       .then((response) => response.json())
       .then((data) => {
