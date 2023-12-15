@@ -5,9 +5,9 @@
             "name": "cs4800_backend",
             "image": "410130958579.dkr.ecr.us-west-1.amazonaws.com/cs4800_backend",
             "command": ["gunicorn", "-b", "0.0.0.0:80", "--access-logfile", "-", "--error-logfile", "-", "--log-level", "debug", "index:app"],
-            "cpu": 500,
-            "memory": 500,
-            "memoryReservation": 500,
+            "cpu": 256,
+            "memory": 512,
+            "memoryReservation": 256,
             "portMappings": [
                 {
                     "name": "cs4800_backend-80-tcp",
@@ -104,8 +104,6 @@
     "requiresCompatibilities": [
         "EC2"
     ],
-    "cpu": "1000",
-    "memory": "1000",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
