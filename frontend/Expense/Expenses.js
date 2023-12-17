@@ -298,6 +298,7 @@ export default function Expenses() {
   };
 
   if (data) {
+    console.log(data)
     const handlePreviousPage = () => {
       if (currPage === 1) return;
       setCurrPage(currPage - 1);
@@ -314,9 +315,11 @@ export default function Expenses() {
         <SectionView>
           <Heading1 style={{ marginBottom: 16 }}>Expenses</Heading1>
           <ScrollView style={{ flex: 1, ...styles.subContainer1 }}>
-            {data.map((expense, idx) => {
+            {'error' in data ? 
+            <BodyText>You have no expenses yet, please enter them manually or connect your bank account and let them sync.</BodyText> 
+            : data.map((expense, idx) => {
               return <Expense data={expense} index={idx} />;
-            })}
+            }) }
             <View style={styles.spaceBetween}>
               <AnimatedButton
                 bgColor={"#BCEE51"}
