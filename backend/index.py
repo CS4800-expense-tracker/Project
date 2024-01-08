@@ -825,10 +825,10 @@ def get_overview(user_id,month,year):
         total_budget = TotalBudget.query.filter(
             and_(
                 TotalBudget.user_id == user_id,
-                extract('month', Expense.timestamp) == month,
-                extract('year', Expense.timestamp) == year
+                extract('month', TotalBudget.timestamp) == month,
+                extract('year', TotalBudget.timestamp) == year
             )
-        ).first()
+        ).order_by(TotalBudget.timestamp.desc()).first()
         
         # Get categories for the user
         categories = Category.query.filter(
@@ -1190,19 +1190,12 @@ def add_monthly_budget_categories():
 # Schedule the job to run at the start of every month
 # schedule.every().month.at('00:00').do(add_monthly_budget_categories).tag('monthly_task')
 
-# # Run the scheduler in an infinite loop
-# while True:
-#     schedule.run_pending()
-
-# if __name__ == "__main__":
-#     app.run(host="localhost", port=3000)
-
-# Function to run the scheduler in a separate thread
+# # Function to run the scheduler in a separate thread
 # def run_scheduler():
 #     while True:
 #         schedule.run_pending()
 
-# Create and start the scheduler thread
+# # Create and start the scheduler thread
 # scheduler_thread = threading.Thread(target=run_scheduler)
 # scheduler_thread.start()
 
