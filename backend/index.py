@@ -62,8 +62,6 @@ if PLAID_ENV == 'development':
     host = plaid.Environment.Development
     PLAID_SECRET = env.get("PLAID_DEVELOPMENT_SECRET")
 
-print(PLAID_SECRET)
-
 configuration = plaid.Configuration(
     host=host,
     api_key={
@@ -1084,7 +1082,6 @@ def create_link_token():
         # either the user id will be passed in, or the email of the user. Don't quite know yet
         user_id = data["user_id"]
         # Create a link_token for the given user
-        print("we before link token craete request")
         req = LinkTokenCreateRequest(
                 products=[Products("transactions")],
                 client_name="CS 4800 Expense Tracker",
@@ -1098,11 +1095,8 @@ def create_link_token():
                 client_id=PLAID_CLIENT_ID,
                 secret=PLAID_SECRET
             )
-        print(req)
         res = plaid_client.link_token_create(req)
-        print(res)
         # Send the data to the client
-        print("we after link token craete request")
         return jsonify(res.to_dict())
     except Exception as e:
         print(f"error: {e}")

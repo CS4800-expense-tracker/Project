@@ -34,7 +34,7 @@ export default function Expenses() {
 
   useEffect(() => {
     // const url = `http://127.0.0.1:5000/expenses/${userID}/${currPage}`;
-    const url = `https://cs4800.acgandhi.com/expenses/${userID}/${currPage}`;
+    const url = `https://api.pennywise.money/expenses/${userID}/${currPage}`;
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
@@ -43,7 +43,7 @@ export default function Expenses() {
   }, [currPage]);
 
   useEffect(() => {
-    fetch(`https://cs4800.acgandhi.com/categories/${userID}`)
+    fetch(`https://api.pennywise.money/categories/${userID}`)
       // fetch(`http://127.0.0.1:5000/categories/${userID}`)
       .then((response) => response.json())
       .then((data) => {
@@ -298,6 +298,7 @@ export default function Expenses() {
   };
 
   if (data) {
+    console.log(data)
     const handlePreviousPage = () => {
       if (currPage === 1) return;
       setCurrPage(currPage - 1);
@@ -314,9 +315,11 @@ export default function Expenses() {
         <SectionView>
           <Heading1 style={{ marginBottom: 16 }}>Expenses</Heading1>
           <ScrollView style={{ flex: 1, ...styles.subContainer1 }}>
-            {data.map((expense, idx) => {
+            {'error' in data ? 
+            <BodyText>You have no expenses yet, please enter them manually or connect your bank account and let them sync.</BodyText> 
+            : data.map((expense, idx) => {
               return <Expense data={expense} index={idx} />;
-            })}
+            }) }
             <View style={styles.spaceBetween}>
               <AnimatedButton
                 bgColor={"#BCEE51"}
