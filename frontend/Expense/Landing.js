@@ -367,6 +367,12 @@ const getFeatureImageWidth = (windowWidth) => {
   else return "80vw";
 };
 
+const getFeatureImageBorderRadius = (windowWidth) => {
+  if (windowWidth >= 1100) return 32;
+  else if (windowWidth >= 700) return 24;
+  else return 12;
+};
+
 const makeStyles = (width) =>
   StyleSheet.create({
     container: {
@@ -500,7 +506,7 @@ const makeStyles = (width) =>
       height: undefined,
       aspectRatio: "256 / 135",
       resizeMode: "contain",
-      borderRadius: 32,
+      borderRadius: getFeatureImageBorderRadius(width),
     },
     featureText: {
       textAlign: "center",
