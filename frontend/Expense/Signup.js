@@ -199,7 +199,7 @@ export default function Signup({ navigation }) {
     <View style={styles.container}>
       <View style={[styles.header, styles.bottomMarginLarge]}>
         <Link
-          to={{ screen: "Landing" }}
+          to={{ screen: "PennyWise" }}
           style={[styles.logo, { alignSelf: "center" }]}
         >
           <Image source={logo} style={styles.logo} />

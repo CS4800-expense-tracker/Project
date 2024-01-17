@@ -66,7 +66,7 @@ export default function Landing() {
       <View
         style={[styles.sectionWidth, styles.rowSpaceBetween, styles.header]}
       >
-        <Link to={{ screen: "Landing" }} style={styles.logo}>
+        <Link to={{ screen: "PennyWise" }} style={styles.logo}>
           <Image source={logoLb} style={styles.logo} />
         </Link>
         <Link to={{ screen: "Login" }}>
@@ -318,7 +318,7 @@ export default function Landing() {
             width < 600 ? { justifyContent: "center" } : "",
           ]}
         >
-          <Link to={{ screen: "Landing" }} style={styles.logo}>
+          <Link to={{ screen: "PennyWise" }} style={styles.logo}>
             <Image source={logoDb} style={styles.logo} />
           </Link>
           <Link to={{ screen: "Login" }}>

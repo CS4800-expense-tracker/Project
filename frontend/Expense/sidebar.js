@@ -113,7 +113,7 @@ export default function Sidebar(props) {
       <View
         style={[styles.mobileHeader, displayMenu ? { marginBottom: 16 } : ""]}
       >
-        <Link to={{ screen: "Landing" }} style={styles.tabLogoMobile}>
+        <Link to={{ screen: "PennyWise" }} style={styles.tabLogoMobile}>
           <Image source={logoDb} style={styles.tabLogoMobile} />
         </Link>
         <Pressable onPress={() => setDisplayMenu(!displayMenu)}>
@@ -208,7 +208,7 @@ export default function Sidebar(props) {
             </Text>
           </AnimatedPressable>
         </Link>
-        <Link to={{ screen: "Landing" }} style={styles.logOutLink}>
+        <Link to={{ screen: "PennyWise" }} style={styles.logOutLink}>
           <Pressable
             onMouseEnter={logOutHoverIn}
             onMouseLeave={logOutHoverOut}
@@ -225,7 +225,7 @@ export default function Sidebar(props) {
         </Link>
       </View>
       <View style={width >= 1200 ? "" : { display: "none" }}>
-        <Link to={{ screen: "Landing" }} style={styles.tabLogo}>
+        <Link to={{ screen: "PennyWise" }} style={styles.tabLogo}>
           <Image
             source={logoDb}
             style={[styles.tabLogo, { width: "100%", display: "flex" }]}
@@ -336,7 +336,7 @@ export default function Sidebar(props) {
             </Animated.View>
           </Pressable>
         </Link>
-        <Link to={{ screen: "Landing" }} style={styles.logOutLink}>
+        <Link to={{ screen: "PennyWise" }} style={styles.logOutLink}>
           <Pressable
             onMouseEnter={logOutHoverIn}
             onMouseLeave={logOutHoverOut}

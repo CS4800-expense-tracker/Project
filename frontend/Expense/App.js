@@ -1,4 +1,4 @@
-import { ToastProvider } from 'react-native-toast-notifications'
+import { ToastProvider } from "react-native-toast-notifications";
 import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
@@ -27,7 +27,7 @@ const myTheme = {
 const linking = {
   config: {
     screens: {
-      Landing: "",
+      PennyWise: "",
       Overview: "account/overview",
       Expenses: "account/expenses",
       Account: "account/settings",
@@ -52,16 +52,16 @@ export default function App() {
   return (
     <AppContextProvider>
       <ToastProvider>
-          <NavigationContainer linking={linking} theme={myTheme}>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="Landing" component={Landing} />
-              <Stack.Screen name="Overview" component={Overview} />
-              <Stack.Screen name="Expenses" component={Expenses} />
-              <Stack.Screen name="Account" component={Account} />
-              <Stack.Screen name="Login" component={Login} />
-              <Stack.Screen name="Signup" component={Signup} />
-            </Stack.Navigator>
-          </NavigationContainer>
+        <NavigationContainer linking={linking} theme={myTheme}>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="PennyWise" component={Landing} />
+            <Stack.Screen name="Overview" component={Overview} />
+            <Stack.Screen name="Expenses" component={Expenses} />
+            <Stack.Screen name="Account" component={Account} />
+            <Stack.Screen name="Login" component={Login} />
+            <Stack.Screen name="Signup" component={Signup} />
+          </Stack.Navigator>
+        </NavigationContainer>
       </ToastProvider>
     </AppContextProvider>
   );
