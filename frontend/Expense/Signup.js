@@ -83,19 +83,16 @@ export default function Signup({ navigation }) {
   };
 
   useEffect(() => {
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     if (windowWidth >= 950) setTextBodyWidth(18);
     else if (windowWidth >= 600) setTextBodyWidth(16);
     else setTextBodyWidth(14);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
-
-
-
 
   const [startSignup, setStartSignup] = useState(false);
   const [responseData, setResponseData] = useState(null);
@@ -178,7 +175,7 @@ export default function Signup({ navigation }) {
           } else {
             // If we have no error, we just navigate to account overview and we set the user id to context
             if (data) {
-              localStorage.setItem("userID", data.user_id)
+              localStorage.setItem("userID", data.user_id);
               navigation.navigate("Overview");
               return;
             } else {
@@ -209,7 +206,7 @@ export default function Signup({ navigation }) {
           { width: "90%", textAlign: "center" },
         ]}
       >
-        Let's get your bank account connected
+        Let's get you signed up
       </Heading2>
       <Heading2
         style={[
@@ -529,6 +526,5 @@ const makeStyles = (width) =>
       fontSize: getTextBodyWidth(width),
       letterSpacing: 0.5,
       lineHeight: "2",
-    }, 
+    },
   });
-

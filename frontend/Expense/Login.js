@@ -118,7 +118,7 @@ export default function Login({ navigation }) {
           { width: "90%", textAlign: "center" },
         ]}
       >
-        Let's get your bank account connected
+        Let's get you logged in
       </Heading2>
       <Heading2
         style={[
