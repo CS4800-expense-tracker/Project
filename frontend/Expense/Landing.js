@@ -125,8 +125,8 @@ export default function Landing() {
                 { marginBottom: 16 },
               ]}
             >
-              PennyWise is on a mission to make expense tracking simple and
-              intelligent.
+              Elevate your financial oversight and make informed choices with
+              PennyWise.
             </BodyText>
             <View style={styles.rowFlex}>
               <Link to={{ screen: "Signup" }}>
