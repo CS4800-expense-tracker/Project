@@ -7,6 +7,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { Link } from "@react-navigation/native";
 import BodyText, { bodyTextStyle } from "./body-text";
 import Heading2 from "./heading2";
 import AnimatedButton from "./animated-button";
@@ -109,7 +110,12 @@ export default function Login({ navigation }) {
   return (
     <View style={styles.container}>
       <View style={[styles.header, styles.bottomMarginLarge]}>
-        <Image source={logo} style={styles.logo} />
+        <Link
+          to={{ screen: "Landing" }}
+          style={[styles.logo, { alignSelf: "center" }]}
+        >
+          <Image source={logo} style={styles.logo} />
+        </Link>
       </View>
       <Heading2
         style={[
